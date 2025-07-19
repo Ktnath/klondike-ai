@@ -4,12 +4,13 @@ from __future__ import annotations
 import argparse
 import os
 import random
-from collections import deque
-from typing import Deque, Tuple
+import csv
+from typing import Tuple, List
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 
 from env.klondike_env import KlondikeEnv
@@ -34,24 +35,53 @@ class DQN(nn.Module):
 
 
 class ReplayBuffer:
-    """Simple replay buffer for experience replay."""
+    """Prioritized experience replay buffer."""
 
-    def __init__(self, capacity: int) -> None:
-        self.buffer: Deque[Tuple[np.ndarray, int, float, np.ndarray, bool]] = deque(maxlen=capacity)
+    def __init__(self, capacity: int, alpha: float = 0.6) -> None:
+        self.capacity = capacity
+        self.alpha = alpha
+        self.buffer: List[Tuple[np.ndarray, int, float, np.ndarray, bool]] = []
+        self.priorities = np.zeros((capacity,), dtype=np.float32)
+        self.pos = 0
 
     def push(self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool]) -> None:
-        self.buffer.append(transition)
+        """Store a transition with maximal priority."""
+        max_prio = self.priorities.max() if self.buffer else 1.0
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(transition)
+        else:
+            self.buffer[self.pos] = transition
+        self.priorities[self.pos] = max_prio
+        self.pos = (self.pos + 1) % self.capacity
 
-    def sample(self, batch_size: int):
-        batch = random.sample(self.buffer, batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
+    def sample(self, batch_size: int, beta: float = 0.4):
+        """Sample a batch of transitions with importance-sampling weights."""
+        if len(self.buffer) == self.capacity:
+            prios = self.priorities
+        else:
+            prios = self.priorities[: self.pos]
+        probs = prios ** self.alpha
+        probs /= probs.sum()
+        indices = np.random.choice(len(self.buffer), batch_size, p=probs)
+        samples = [self.buffer[idx] for idx in indices]
+        states, actions, rewards, next_states, dones = zip(*samples)
+        total = len(self.buffer)
+        weights = (total * probs[indices]) ** (-beta)
+        weights /= weights.max()
         return (
             torch.tensor(states, dtype=torch.float32),
             torch.tensor(actions, dtype=torch.int64),
             torch.tensor(rewards, dtype=torch.float32),
             torch.tensor(next_states, dtype=torch.float32),
             torch.tensor(dones, dtype=torch.float32),
+            torch.tensor(weights, dtype=torch.float32),
+            indices,
         )
+
+    def update_priorities(self, indices: np.ndarray, td_errors: torch.Tensor) -> None:
+        """Update priorities of sampled transitions."""
+        for idx, err in zip(indices, td_errors.detach().cpu().numpy()):
+            self.priorities[idx] = float(abs(err)) + 1e-6
 
     def __len__(self) -> int:
         return len(self.buffer)
@@ -64,15 +94,20 @@ def train(config) -> None:
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
-    policy_net = DQN(input_dim, action_dim)
-    target_net = DQN(input_dim, action_dim)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    policy_net = DQN(input_dim, action_dim).to(device)
+    target_net = DQN(input_dim, action_dim).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
     optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
-    criterion = nn.SmoothL1Loss()
 
-    buffer = ReplayBuffer(config.training.buffer_size)
+    per_cfg = config.training.get("per", {}) if hasattr(config.training, "get") else {}
+    per_alpha = per_cfg.get("alpha", 0.6)
+    per_beta = per_cfg.get("beta", 0.4)
+
+    buffer = ReplayBuffer(config.training.buffer_size, alpha=per_alpha)
     batch_size = config.training.batch_size
     gamma = config.training.gamma
     epsilon = config.training.epsilon.start
@@ -81,12 +116,21 @@ def train(config) -> None:
     target_update = config.training.target_update_freq
     log_interval = config.logging.log_interval
     save_interval = config.logging.save_interval
+    log_path = getattr(config.logging, "log_path", "results/train_log.csv")
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    log_file = open(log_path, "w", newline="", encoding="utf-8")
+    csv_logger = csv.writer(log_file)
+    csv_logger.writerow(["episode", "reward", "loss", "epsilon", "win_rate"])
     save_path = config.model.save_path
     global_step = 0
     wins = 0
 
+    use_amp = torch.cuda.is_available()
+    scaler = torch.cuda.amp.GradScaler() if use_amp else None
+
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
+    loss = torch.tensor(0.0)
     for episode in range(1, episodes + 1):
         state = env.reset()
         done = False
@@ -98,7 +142,7 @@ def train(config) -> None:
                 action = random.choice(valid_actions)
             else:
                 with torch.no_grad():
-                    q_values = policy_net(torch.tensor(state, dtype=torch.float32))
+                    q_values = policy_net(torch.tensor(state, dtype=torch.float32, device=device))
                     q_valid = q_values[valid_actions]
                     action = valid_actions[int(torch.argmax(q_valid).item())]
 
@@ -108,16 +152,45 @@ def train(config) -> None:
             state = next_state
 
             if len(buffer) >= batch_size:
-                (b_states, b_actions, b_rewards, b_next_states, b_dones) = buffer.sample(batch_size)
-                q_values = policy_net(b_states).gather(1, b_actions.unsqueeze(1)).squeeze(1)
-                with torch.no_grad():
-                    target_q = target_net(b_next_states).max(1)[0]
-                    expected_q = b_rewards + gamma * (1 - b_dones) * target_q
-                loss = criterion(q_values, expected_q)
+                sample = buffer.sample(batch_size, beta=per_beta)
+                (b_states, b_actions, b_rewards, b_next_states, b_dones, weights, idxs) = sample
+                b_states = b_states.to(device)
+                b_actions = b_actions.to(device)
+                b_rewards = b_rewards.to(device)
+                b_next_states = b_next_states.to(device)
+                b_dones = b_dones.to(device)
+                weights = weights.to(device)
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                if use_amp:
+                    with torch.cuda.amp.autocast():
+                        q_values = policy_net(b_states).gather(1, b_actions.unsqueeze(1)).squeeze(1)
+                        with torch.no_grad():
+                            next_actions = policy_net(b_next_states).argmax(dim=1, keepdim=True)
+                            target_q = target_net(b_next_states).gather(1, next_actions).squeeze(1)
+                            expected_q = b_rewards + gamma * (1 - b_dones) * target_q
+                        td_errors = expected_q - q_values
+                        loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
+                        loss = (loss * weights).mean()
+                    optimizer.zero_grad()
+                    scaler.scale(loss).backward()
+                    torch.nn.utils.clip_grad_norm_(policy_net.parameters(), max_norm=1.0)
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    q_values = policy_net(b_states).gather(1, b_actions.unsqueeze(1)).squeeze(1)
+                    with torch.no_grad():
+                        next_actions = policy_net(b_next_states).argmax(dim=1, keepdim=True)
+                        target_q = target_net(b_next_states).gather(1, next_actions).squeeze(1)
+                        expected_q = b_rewards + gamma * (1 - b_dones) * target_q
+                    td_errors = expected_q - q_values
+                    loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
+                    loss = (loss * weights).mean()
+                    optimizer.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(policy_net.parameters(), max_norm=1.0)
+                    optimizer.step()
+
+                buffer.update_priorities(idxs, td_errors)
 
                 if global_step % target_update == 0:
                     target_net.load_state_dict(policy_net.state_dict())
@@ -128,16 +201,20 @@ def train(config) -> None:
             wins += 1
 
         if episode % log_interval == 0:
+            win_rate = 100.0 * wins / episode
+            loss_val = loss.item() if isinstance(loss, torch.Tensor) else loss
             print(
-                f"Episode {episode} | Reward: {episode_reward:.2f} | Loss: {loss.item() if 'loss' in locals() else 0:.4f} | "
-                f"Epsilon: {epsilon:.3f} | Wins: {wins}"
+                f"Episode {episode} | Reward: {episode_reward:.2f} | Loss: {loss_val:.4f} | "
+                f"Epsilon: {epsilon:.3f} | WinRate: {win_rate:.2f} %"
             )
+            csv_logger.writerow([episode, episode_reward, loss_val, epsilon, win_rate])
 
         if episode % save_interval == 0:
             base, ext = os.path.splitext(save_path)
             torch.save(policy_net.state_dict(), f"{base}_{episode}{ext}")
 
     torch.save(policy_net.state_dict(), save_path)
+    log_file.close()
 
 
 if __name__ == "__main__":
