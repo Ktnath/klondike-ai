@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import random
 from collections import deque
 from typing import Deque, Tuple
@@ -12,6 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from env.klondike_env import KlondikeEnv
+from utils.config import load_config
 
 
 class DQN(nn.Module):
@@ -55,7 +57,9 @@ class ReplayBuffer:
         return len(self.buffer)
 
 
-def train(episodes: int) -> None:
+def train(config) -> None:
+    """Train a DQN agent using parameters from the config."""
+    episodes = config.training.episodes
     env = KlondikeEnv()
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -65,18 +69,23 @@ def train(episodes: int) -> None:
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
-    optimizer = optim.Adam(policy_net.parameters(), lr=1e-3)
+    optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
     criterion = nn.SmoothL1Loss()
 
-    buffer = ReplayBuffer(10000)
-    batch_size = 64
-    gamma = 0.99
-    epsilon = 1.0
-    epsilon_min = 0.05
-    epsilon_decay = 0.995
-    target_update = 1000
+    buffer = ReplayBuffer(config.training.buffer_size)
+    batch_size = config.training.batch_size
+    gamma = config.training.gamma
+    epsilon = config.training.epsilon.start
+    epsilon_min = config.training.epsilon.min
+    epsilon_decay = config.training.epsilon.decay
+    target_update = config.training.target_update_freq
+    log_interval = config.logging.log_interval
+    save_interval = config.logging.save_interval
+    save_path = config.model.save_path
     global_step = 0
     wins = 0
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     for episode in range(1, episodes + 1):
         state = env.reset()
@@ -118,19 +127,28 @@ def train(episodes: int) -> None:
         if env.state.is_won():
             wins += 1
 
-        print(
-            f"Episode {episode} | Reward: {episode_reward:.2f} | Loss: {loss.item() if 'loss' in locals() else 0:.4f} | "
-            f"Epsilon: {epsilon:.3f} | Wins: {wins}"
-        )
+        if episode % log_interval == 0:
+            print(
+                f"Episode {episode} | Reward: {episode_reward:.2f} | Loss: {loss.item() if 'loss' in locals() else 0:.4f} | "
+                f"Epsilon: {epsilon:.3f} | Wins: {wins}"
+            )
 
-        if episode % 100 == 0:
-            torch.save(policy_net.state_dict(), f"models/dqn_{episode}.pth")
+        if episode % save_interval == 0:
+            base, ext = os.path.splitext(save_path)
+            torch.save(policy_net.state_dict(), f"{base}_{episode}{ext}")
 
-    torch.save(policy_net.state_dict(), "models/dqn_final.pth")
+    torch.save(policy_net.state_dict(), save_path)
 
 
 if __name__ == "__main__":
+    config = load_config()
     parser = argparse.ArgumentParser(description="Train DQN on Klondike")
-    parser.add_argument("--episodes", type=int, default=5000, help="Number of training episodes")
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        default=config.training.episodes,
+        help="Number of training episodes",
+    )
     args = parser.parse_args()
-    train(args.episodes)
+    config.training.episodes = args.episodes
+    train(config)
