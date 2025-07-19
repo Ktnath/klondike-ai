@@ -36,11 +36,14 @@ def plot_metrics(df: pd.DataFrame, output: str) -> None:
     if "loss" in df.columns:
         plt.plot(x, df["loss"], label="Loss", alpha=0.7)
 
-    if "win" in df.columns:
-        plt.plot(x, df["win"], label="Win Rate", alpha=0.7)
+    if "win_rate" in df.columns:
+        plt.plot(x, df["win_rate"], label="Win Rate", alpha=0.7)
 
     plt.xlabel("Episode")
-    plt.title("Training metrics")
+    if "win_rate" in df.columns:
+        plt.title("Win Rate over Episodes")
+    else:
+        plt.title("Training metrics")
     plt.legend()
     plt.tight_layout()
 
