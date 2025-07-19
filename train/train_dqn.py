@@ -1,4 +1,5 @@
 """Train a simple DQN agent on the Klondike environment."""
+
 from __future__ import annotations
 
 import argparse
@@ -6,6 +7,7 @@ import os
 import random
 import csv
 from typing import Tuple, List
+from glob import glob
 
 import numpy as np
 import torch
@@ -72,7 +74,9 @@ class ReplayBuffer:
         self.priorities = np.zeros((capacity,), dtype=np.float32)
         self.pos = 0
 
-    def push(self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool]) -> None:
+    def push(
+        self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool]
+    ) -> None:
         """Store a transition with maximal priority."""
         max_prio = self.priorities.max() if self.buffer else 1.0
         if len(self.buffer) < self.capacity:
@@ -88,7 +92,7 @@ class ReplayBuffer:
             prios = self.priorities
         else:
             prios = self.priorities[: self.pos]
-        probs = prios ** self.alpha
+        probs = prios**self.alpha
         probs /= probs.sum()
         indices = np.random.choice(len(self.buffer), batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
@@ -152,6 +156,17 @@ def train(config) -> None:
     log_file = open(log_path, "w", newline="", encoding="utf-8")
     csv_logger = csv.writer(log_file)
     csv_logger.writerow(["episode", "reward", "loss", "epsilon", "win_rate"])
+
+    ep_logging = getattr(config.logging, "enable_logging", False)
+    episode_dir = os.path.join("logs", "episodes")
+    if ep_logging:
+        os.makedirs(episode_dir, exist_ok=True)
+        existing = [
+            int(f.split("_")[-1].split(".")[0])
+            for f in os.listdir(episode_dir)
+            if f.startswith("episode_") and f.endswith(".csv")
+        ]
+        next_ep = max(existing) if existing else 0
     save_path = config.model.save_path
     global_step = 0
     wins = 0
@@ -166,25 +181,72 @@ def train(config) -> None:
         state = env.reset()
         done = False
         episode_reward = 0.0
+        if ep_logging:
+            next_ep += 1
+            ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
+            while os.path.exists(ep_path):
+                next_ep += 1
+                ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
+            ep_file = open(ep_path, "w", newline="", encoding="utf-8")
+            ep_file.write(f"# model: {os.path.basename(save_path)}\n")
+            ep_writer = csv.DictWriter(
+                ep_file,
+                fieldnames=[
+                    "step",
+                    "observation",
+                    "action",
+                    "reward",
+                    "done",
+                    "epsilon",
+                    "cumulative_reward",
+                ],
+            )
+            ep_writer.writeheader()
+            step_num = 0
 
         while not done:
+            current_state = state
             valid_actions = env.get_valid_actions()
             if random.random() < epsilon:
                 action = random.choice(valid_actions)
             else:
                 with torch.no_grad():
-                    q_values = policy_net(torch.tensor(state, dtype=torch.float32, device=device))
+                    q_values = policy_net(
+                        torch.tensor(state, dtype=torch.float32, device=device)
+                    )
                     q_valid = q_values[valid_actions]
                     action = valid_actions[int(torch.argmax(q_valid).item())]
 
             next_state, reward, done, info = env.step(action)
             episode_reward += reward
+            if ep_logging:
+                ep_writer.writerow(
+                    {
+                        "step": step_num,
+                        "observation": current_state.tolist(),
+                        "action": action,
+                        "reward": reward,
+                        "done": done,
+                        "epsilon": epsilon,
+                        "cumulative_reward": episode_reward,
+                    }
+                )
+                ep_file.flush()
+                step_num += 1
             buffer.push(state, action, reward, next_state, done)
             state = next_state
 
             if len(buffer) >= batch_size:
                 sample = buffer.sample(batch_size, beta=per_beta)
-                (b_states, b_actions, b_rewards, b_next_states, b_dones, weights, idxs) = sample
+                (
+                    b_states,
+                    b_actions,
+                    b_rewards,
+                    b_next_states,
+                    b_dones,
+                    weights,
+                    idxs,
+                ) = sample
                 b_states = b_states.to(device)
                 b_actions = b_actions.to(device)
                 b_rewards = b_rewards.to(device)
@@ -194,31 +256,53 @@ def train(config) -> None:
 
                 if use_amp:
                     with torch.cuda.amp.autocast():
-                        q_values = policy_net(b_states).gather(1, b_actions.unsqueeze(1)).squeeze(1)
+                        q_values = (
+                            policy_net(b_states)
+                            .gather(1, b_actions.unsqueeze(1))
+                            .squeeze(1)
+                        )
                         with torch.no_grad():
-                            next_actions = policy_net(b_next_states).argmax(dim=1, keepdim=True)
-                            target_q = target_net(b_next_states).gather(1, next_actions).squeeze(1)
+                            next_actions = policy_net(b_next_states).argmax(
+                                dim=1, keepdim=True
+                            )
+                            target_q = (
+                                target_net(b_next_states)
+                                .gather(1, next_actions)
+                                .squeeze(1)
+                            )
                             expected_q = b_rewards + gamma * (1 - b_dones) * target_q
                         td_errors = expected_q - q_values
                         loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
                         loss = (loss * weights).mean()
                     optimizer.zero_grad()
                     scaler.scale(loss).backward()
-                    torch.nn.utils.clip_grad_norm_(policy_net.parameters(), max_norm=1.0)
+                    torch.nn.utils.clip_grad_norm_(
+                        policy_net.parameters(), max_norm=1.0
+                    )
                     scaler.step(optimizer)
                     scaler.update()
                 else:
-                    q_values = policy_net(b_states).gather(1, b_actions.unsqueeze(1)).squeeze(1)
+                    q_values = (
+                        policy_net(b_states)
+                        .gather(1, b_actions.unsqueeze(1))
+                        .squeeze(1)
+                    )
                     with torch.no_grad():
-                        next_actions = policy_net(b_next_states).argmax(dim=1, keepdim=True)
-                        target_q = target_net(b_next_states).gather(1, next_actions).squeeze(1)
+                        next_actions = policy_net(b_next_states).argmax(
+                            dim=1, keepdim=True
+                        )
+                        target_q = (
+                            target_net(b_next_states).gather(1, next_actions).squeeze(1)
+                        )
                         expected_q = b_rewards + gamma * (1 - b_dones) * target_q
                     td_errors = expected_q - q_values
                     loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
                     loss = (loss * weights).mean()
                     optimizer.zero_grad()
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(policy_net.parameters(), max_norm=1.0)
+                    torch.nn.utils.clip_grad_norm_(
+                        policy_net.parameters(), max_norm=1.0
+                    )
                     optimizer.step()
 
                 buffer.update_priorities(idxs, td_errors)
@@ -243,6 +327,9 @@ def train(config) -> None:
         if episode % save_interval == 0:
             base, ext = os.path.splitext(save_path)
             torch.save(policy_net.state_dict(), f"{base}_{episode}{ext}")
+
+        if ep_logging:
+            ep_file.close()
 
     torch.save(policy_net.state_dict(), save_path)
     log_file.close()
