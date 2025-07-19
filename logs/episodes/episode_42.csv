@@ -1,0 +1,5 @@
+# sample episode
+step,observation,action,reward,done,epsilon,cumulative_reward
+0,"[0,0,0]",12,0.0,False,1.0,0.0
+1,"[0,0,1]",45,1.0,False,0.9,1.0
+2,"[0,1,1]",23,5.0,True,0.8,6.0
