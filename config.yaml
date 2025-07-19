@@ -16,6 +16,7 @@ training:
 
 model:
   save_path: models/dqn_model.pth
+  type: dueling
 
 evaluation:
   episodes: 100

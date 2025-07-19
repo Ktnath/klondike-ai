@@ -34,6 +34,34 @@ class DQN(nn.Module):
         return self.net(x)
 
 
+class DuelingDQN(nn.Module):
+    """Dueling architecture for approximating Q-values."""
+
+    def __init__(self, input_dim: int, action_dim: int) -> None:
+        super().__init__()
+        self.feature = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+        )
+        self.value_stream = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1),
+        )
+        self.advantage_stream = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_dim),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # noqa: D401
+        features = self.feature(x)
+        value = self.value_stream(features)
+        advantage = self.advantage_stream(features)
+        q = value + advantage - advantage.mean(dim=1, keepdim=True)
+        return q
+
+
 class ReplayBuffer:
     """Prioritized experience replay buffer."""
 
@@ -96,8 +124,11 @@ def train(config) -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    policy_net = DQN(input_dim, action_dim).to(device)
-    target_net = DQN(input_dim, action_dim).to(device)
+    model_type = getattr(config.model, "type", "dqn")
+    model_cls = DuelingDQN if model_type == "dueling" else DQN
+
+    policy_net = model_cls(input_dim, action_dim).to(device)
+    target_net = model_cls(input_dim, action_dim).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 

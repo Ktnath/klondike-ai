@@ -10,17 +10,25 @@ from typing import Any
 import torch
 
 from env.klondike_env import KlondikeEnv
-from train_dqn import DQN
+from train_dqn import DQN, DuelingDQN
 from utils.config import load_config
 
 
-def evaluate(model_path: str, episodes: int, greedy_policy: bool = True) -> dict[str, Any]:
+def evaluate(
+    model_path: str,
+    episodes: int,
+    greedy_policy: bool = True,
+    config: Any | None = None,
+) -> dict[str, Any]:
     """Run evaluation for a number of episodes."""
     env = KlondikeEnv()
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
-    policy_net = DQN(input_dim, action_dim)
+    model_type = getattr(config.model, "type", "dqn") if config else "dqn"
+    model_cls = DuelingDQN if model_type == "dueling" else DQN
+
+    policy_net = model_cls(input_dim, action_dim)
     state_dict = torch.load(model_path, map_location=torch.device("cpu"))
     policy_net.load_state_dict(state_dict)
     policy_net.eval()
@@ -80,7 +88,12 @@ def main() -> None:
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    results = evaluate(args.model, args.episodes, config.evaluation.greedy_policy)
+    results = evaluate(
+        args.model,
+        args.episodes,
+        config.evaluation.greedy_policy,
+        config,
+    )
 
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
