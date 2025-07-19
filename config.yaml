@@ -1,0 +1,26 @@
+env:
+  name: KlondikeEnv
+  max_steps: 500
+
+training:
+  episodes: 5000
+  batch_size: 64
+  buffer_size: 100000
+  learning_rate: 0.0005
+  gamma: 0.99
+  target_update_freq: 1000
+  epsilon:
+    start: 1.0
+    min: 0.05
+    decay: 0.995
+
+model:
+  save_path: models/dqn_model.pth
+
+evaluation:
+  episodes: 100
+  greedy_policy: true
+
+logging:
+  log_interval: 100
+  save_interval: 500

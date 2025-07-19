@@ -4,16 +4,18 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 from typing import Any
 
 import torch
 
 from env.klondike_env import KlondikeEnv
 from train_dqn import DQN
+from utils.config import load_config
 
 
-def evaluate(model_path: str, episodes: int) -> dict[str, Any]:
-    """Run evaluation for a number of episodes using a greedy policy."""
+def evaluate(model_path: str, episodes: int, greedy_policy: bool = True) -> dict[str, Any]:
+    """Run evaluation for a number of episodes."""
     env = KlondikeEnv()
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -36,7 +38,10 @@ def evaluate(model_path: str, episodes: int) -> dict[str, Any]:
             with torch.no_grad():
                 q_values = policy_net(torch.tensor(state, dtype=torch.float32))
                 q_valid = q_values[valid_actions]
+            if greedy_policy:
                 action = valid_actions[int(torch.argmax(q_valid).item())]
+            else:
+                action = random.choice(valid_actions)
 
             next_state, reward, done, _ = env.step(action)
             episode_reward += reward
@@ -52,20 +57,30 @@ def evaluate(model_path: str, episodes: int) -> dict[str, Any]:
 
 
 def main() -> None:
+    config = load_config()
     parser = argparse.ArgumentParser(description="Evaluate a trained DQN model")
     parser.add_argument(
-        "--model", type=str, default="models/dqn_final.pth", help="Path to model"
+        "--model",
+        type=str,
+        default=config.model.save_path,
+        help="Path to model",
     )
     parser.add_argument(
-        "--episodes", type=int, default=100, help="Number of evaluation episodes"
+        "--episodes",
+        type=int,
+        default=config.evaluation.episodes,
+        help="Number of evaluation episodes",
     )
     parser.add_argument(
-        "--output", type=str, default="results/eval_results.json", help="Output JSON"
+        "--output",
+        type=str,
+        default="results/eval_results.json",
+        help="Output JSON",
     )
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    results = evaluate(args.model, args.episodes)
+    results = evaluate(args.model, args.episodes, config.evaluation.greedy_policy)
 
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
