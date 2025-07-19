@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>Replay replay_episode_42.html</title>
+<style>
+ table {border-collapse: collapse; width: 100%;}
+ th, td {border: 1px solid #ccc; padding: 4px; text-align: center;}
+ tr.active {background: #fdd;}
+</style>
+</head>
+<body>
+<h2>Episode replay</h2>
+<p>Total steps: 3 | Final reward: 6.00</p>
+<table id='replay'>
+<thead><tr><th>Step</th><th>Action</th><th>Reward</th><th>Epsilon</th><th>Done</th><th>Cumulative</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>12</td><td>0.00</td><td>1.00</td><td>False</td><td>0.00</td></tr>
+<tr><td>1</td><td>45</td><td>1.00</td><td>0.90</td><td>False</td><td>1.00</td></tr>
+<tr><td>2</td><td>23</td><td>5.00</td><td>0.80</td><td>True</td><td>6.00</td></tr>
+</tbody>
+</table>
+<script>
+const rows=document.querySelectorAll('#replay tbody tr');
+let idx=0;const delay=50;
+function highlight(){rows.forEach(r=>r.classList.remove('active'));if(idx<rows.length) rows[idx].classList.add('active');}
+highlight();
+setInterval(()=>{idx=(idx+1)%rows.length;highlight();}, delay);
+</script>
+</body>
+</html>
