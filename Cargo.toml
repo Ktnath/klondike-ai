@@ -1,0 +1,22 @@
+[workspace]
+members = ["core", "ai", "cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Klondike AI Team"]
+
+[workspace.dependencies]
+rand = { version = "0.9.0", default-features = false, features = ["small_rng"] }
+rand_mt = "5.0"
+arrayvec = { version = "0.7.4", default-features = false }
+hashbrown = { version = "0.15", default-features = false }
+static_assertions = "1.1.0"
+uint = { version = "0.10", default-features = false }
+pyo3 = { version = "0.20", features = ["extension-module"] }
+numpy = "0.20"
+torch = "0.12"
+tqdm = "0.6"
+colored = "3.0.0"
+signal-hook = "0.3.17"

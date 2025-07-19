@@ -1,0 +1,13 @@
+[package]
+name = "klondike-ai"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+klondike-core = { path = "../core" }
+pyo3.workspace = true
+numpy.workspace = true
+torch.workspace = true
+tqdm.workspace = true
