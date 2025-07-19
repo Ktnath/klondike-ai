@@ -25,3 +25,4 @@ evaluation:
 logging:
   log_interval: 100
   save_interval: 500
+  enable_logging: true
