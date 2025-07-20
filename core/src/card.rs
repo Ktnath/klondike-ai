@@ -1,7 +1,9 @@
 use pyo3::prelude::*;
 
+use serde::{Serialize, Deserialize};
+
 #[pyclass]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Card {
     rank: u8,
     suit: u8,

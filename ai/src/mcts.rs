@@ -44,7 +44,7 @@ impl MCTS {
         }
     }
 
-    pub fn search(&mut self, engine: &Engine, temp: f32) -> Vec<(Move, f32)> {
+    pub fn search(&mut self, engine: &Engine, temp: f32, simulations: usize) -> Vec<(Move, f32)> {
         let state_str = self.get_state_str(engine);
         
         // Si l'état n'a pas été visité, l'évaluer avec le réseau de neurones
@@ -58,7 +58,7 @@ impl MCTS {
         }
 
         // Effectuer les simulations MCTS
-        for _ in 0..100 { // Nombre de simulations configurable
+        for _ in 0..simulations {
             self.simulate(engine.clone());
         }
 
@@ -162,7 +162,7 @@ mod tests {
         let mut mcts = MCTS::new(1.0, neural_net);
         let engine = Engine::new();
 
-        let probs = mcts.search(&engine, 1.0);
+        let probs = mcts.search(&engine, 1.0, 10);
         assert!(!probs.is_empty());
         
         let sum: f32 = probs.iter().map(|(_, p)| p).sum();

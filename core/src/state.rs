@@ -1,9 +1,10 @@
 use pyo3::prelude::*;
+use serde::{Serialize, Deserialize};
 use arrayvec::ArrayVec;
 use crate::{Card, N_CARDS, N_PILES, N_FOUNDATIONS, N_SUITS};
 
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct GameState {
     // Cartes dans le talon (pioche)
     stock: Vec<Card>,

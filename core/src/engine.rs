@@ -18,6 +18,15 @@ impl Engine {
         engine
     }
 
+    pub fn from_state(state: GameState) -> Self {
+        let mut engine = Self {
+            state,
+            available_moves: Vec::new(),
+        };
+        engine.update_available_moves();
+        engine
+    }
+
     pub fn get_state(&self) -> &GameState {
         &self.state
     }
