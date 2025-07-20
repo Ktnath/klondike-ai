@@ -1,5 +1,6 @@
 """Train a simple DQN agent on the Klondike environment."""
 
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +15,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from env.klondike_env import KlondikeEnv
 from utils.config import load_config
