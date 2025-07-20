@@ -139,3 +139,5 @@ class Coach:
                 moves,
             )
 
+        logging.info("Training finished")
+
