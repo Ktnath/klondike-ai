@@ -70,7 +70,7 @@ impl Coach {
 
             // Obtenir les probabilités des coups via MCTS
             let state = engine.get_state().encode_observation();
-            let probs = mcts.search(&engine, temp);
+            let probs = mcts.search(&engine, temp, self.config.num_mcts_sims as usize);
 
             // Sauvegarder l'état actuel
             let mut pi = vec![0.0; 96]; // Taille de l'espace d'actions

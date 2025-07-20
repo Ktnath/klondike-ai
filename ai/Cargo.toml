@@ -5,9 +5,14 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 klondike-core = { path = "../core" }
 pyo3.workspace = true
 numpy.workspace = true
 torch.workspace = true
 tqdm.workspace = true
+serde.workspace = true
+serde_json.workspace = true
