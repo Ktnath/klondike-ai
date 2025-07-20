@@ -10,9 +10,12 @@ import optuna
 import yaml
 from tqdm import tqdm
 
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from utils.config import load_config, DotDict
-from train_dqn import train
-from evaluate_dqn import evaluate
+from train.train_dqn import train
+from train.evaluate_dqn import evaluate
 
 
 def objective(trial: optuna.Trial) -> float:

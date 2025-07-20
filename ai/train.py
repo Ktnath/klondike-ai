@@ -3,7 +3,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from klondike_core import Engine
-from klondike_ai import Coach, TrainingConfig, NeuralNet
+# TODO: Provide Python module or bindings for `klondike_ai`
+# from klondike_ai import Coach, TrainingConfig, NeuralNet
 
 def main():
     print("Démarrage de l'entraînement du modèle Klondike AI...")
