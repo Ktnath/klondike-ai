@@ -9,8 +9,11 @@ from typing import Any
 
 import torch
 
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from env.klondike_env import KlondikeEnv
-from train_dqn import DQN, DuelingDQN
+from train.train_dqn import DQN, DuelingDQN
 from utils.config import load_config
 
 
