@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import random
+import logging
 from typing import Any
 
 import torch
@@ -68,6 +69,7 @@ def evaluate(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     config = load_config()
     parser = argparse.ArgumentParser(description="Evaluate a trained DQN model")
     parser.add_argument(
@@ -101,10 +103,12 @@ def main() -> None:
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    print(f"Evaluation on {args.episodes} episodes")
-    win_rate = 100 * results["wins"] / results["episodes"] if results["episodes"] else 0.0
-    print(f"Win rate: {win_rate:.2f} %")
-    print(f"Average reward: {results['avg_reward']:.2f}")
+    logging.info("Evaluation on %d episodes", args.episodes)
+    win_rate = (
+        100 * results["wins"] / results["episodes"] if results["episodes"] else 0.0
+    )
+    logging.info("Win rate: %.2f %%", win_rate)
+    logging.info("Average reward: %.2f", results["avg_reward"])
 
 
 if __name__ == "__main__":

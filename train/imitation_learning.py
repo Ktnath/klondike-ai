@@ -5,6 +5,7 @@ import argparse
 import csv
 import glob
 import os
+import logging
 from ast import literal_eval
 from typing import List, Tuple
 
@@ -79,15 +80,15 @@ def train(dataset: TensorDataset, epochs: int, model_path: str) -> None:
 
             preds = logits.argmax(1)
             acc = (preds == y_batch).float().mean().item()
-            print(f"Epoch {epoch} Batch Acc: {acc:.3f}")
+            logging.info("Epoch %d Batch Acc: %.3f", epoch, acc)
 
             epoch_loss += loss.item()
         avg_loss = epoch_loss / len(loader)
-        print(f"Epoch {epoch} Average Loss: {avg_loss:.4f}")
+        logging.info("Epoch %d Average Loss: %.4f", epoch, avg_loss)
 
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     torch.save(model.state_dict(), model_path)
-    print(f"Model saved to {model_path}")
+    logging.info("Model saved to %s", model_path)
 
 
 def evaluate(model_path: str, dataset: TensorDataset) -> None:
@@ -109,10 +110,11 @@ def evaluate(model_path: str, dataset: TensorDataset) -> None:
             correct += (preds == y_batch).sum().item()
             total += y_batch.size(0)
     acc = correct / total if total else 0.0
-    print(f"Test Accuracy: {acc:.3f}")
+    logging.info("Test Accuracy: %.3f", acc)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Imitation learning from episodes")
     parser.add_argument("--episodes_dir", type=str, default="logs/episodes", help="Directory with episode CSVs")
     parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")

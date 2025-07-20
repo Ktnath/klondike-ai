@@ -1,3 +1,4 @@
+import logging
 import os
 import torch
 import numpy as np
@@ -6,7 +7,8 @@ from klondike_core import Engine
 from klondike_ai import Coach, TrainingConfig, NeuralNet
 
 def main():
-    print("Démarrage de l'entraînement du modèle Klondike AI...")
+    logging.basicConfig(level=logging.INFO)
+    logging.info("Démarrage de l'entraînement du modèle Klondike AI...")
 
     # Configuration de l'entraînement
     config = TrainingConfig(
@@ -32,29 +34,29 @@ def main():
     net = NeuralNet(input_shape, action_size)
 
     if config.load_model and os.path.exists("models/best_model.pth"):
-        print("Chargement du modèle existant...")
+        logging.info("Chargement du modèle existant...")
         net.load_checkpoint("models", "best_model.pth")
 
     # Création du coach et démarrage de l'entraînement
     coach = Coach(net, config)
 
     try:
-        print("Démarrage de l'entraînement...")
+        logging.info("Démarrage de l'entraînement...")
         coach.learn()
-        print("Entraînement terminé avec succès !")
+        logging.info("Entraînement terminé avec succès !")
 
     except KeyboardInterrupt:
-        print("\nEntraînement interrompu par l'utilisateur.")
+        logging.info("\nEntraînement interrompu par l'utilisateur.")
         # Sauvegarder le modèle avant de quitter
-        print("Sauvegarde du modèle...")
+        logging.info("Sauvegarde du modèle...")
         net.save_checkpoint("models", "interrupted_model.pth")
 
     except Exception as e:
-        print(f"\nErreur pendant l'entraînement: {e}")
+        logging.error("\nErreur pendant l'entraînement: %s", e)
         raise
 
 def evaluate_model():
-    print("Évaluation du modèle...")
+    logging.info("Évaluation du modèle...")
     net = NeuralNet(156, 96)
     net.load_checkpoint("models", "best_model.pth")
 
@@ -85,7 +87,7 @@ def evaluate_model():
             wins += 1
 
     win_rate = wins / total_games
-    print(f"Taux de victoire: {win_rate:.2%}")
+    logging.info("Taux de victoire: %.2f%%", 100 * win_rate)
     return win_rate
 
 if __name__ == "__main__":

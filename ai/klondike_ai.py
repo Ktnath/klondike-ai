@@ -90,6 +90,52 @@ class Coach:
     def __init__(self, neural_net: NeuralNet, config: TrainingConfig) -> None:
         self.neural_net = neural_net
         self.config = config
+        try:
+            from env.klondike_env import KlondikeEnv
+        except Exception as exc:  # pragma: no cover - import issues
+            raise RuntimeError(
+                "Failed to import KlondikeEnv. Ensure the environment is available"
+            ) from exc
+        self.env = KlondikeEnv()
+        # Default policy simply uses the neural network prediction
+        self.policy = self.neural_net
 
     def learn(self) -> None:  # noqa: D401
-        raise NotImplementedError("Training loop not implemented yet.")
+        """Simple self-play training loop."""
+        import logging
+        import numpy as np
+
+        all_examples: List[Tuple[List[float], List[float], float]] = []
+
+        for episode in range(1, self.config.num_episodes + 1):
+            obs = self.env.reset()
+            done = False
+            episode_examples: List[Tuple[List[float], List[float], float]] = []
+            moves = 0
+
+            while not done and moves < self.config.max_moves:
+                valid_actions = self.env.get_valid_actions()
+                if not valid_actions:
+                    break
+
+                pi, _ = self.policy.predict(obs.tolist())
+                # Choose the valid action with highest policy probability
+                pi_valid = np.array([pi[a] for a in valid_actions])
+                action = valid_actions[int(np.argmax(pi_valid))]
+
+                next_obs, reward, done, _ = self.env.step(action)
+                episode_examples.append((obs.tolist(), pi, reward))
+                obs = next_obs
+                moves += 1
+
+            all_examples.extend(episode_examples)
+            if all_examples:
+                self.neural_net.train(all_examples)
+
+            logging.info(
+                "Episode %d/%d finished with %d moves",
+                episode,
+                self.config.num_episodes,
+                moves,
+            )
+

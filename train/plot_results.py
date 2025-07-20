@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -53,6 +54,7 @@ def plot_metrics(df: pd.DataFrame, output: str) -> None:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Plot DQN training results")
     parser.add_argument(
         "--log", type=str, default="results/train_log.csv", help="Path to log file"
@@ -64,7 +66,7 @@ def main() -> None:
 
     df = load_logs(args.log)
     plot_metrics(df, args.output)
-    print(f"Plot saved to {args.output}")
+    logging.info("Plot saved to %s", args.output)
 
 
 if __name__ == "__main__":

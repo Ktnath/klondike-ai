@@ -7,6 +7,7 @@ import argparse
 import os
 import random
 import csv
+import logging
 from typing import Tuple, List
 from glob import glob
 
@@ -323,9 +324,13 @@ def train(config) -> None:
         if episode % log_interval == 0:
             win_rate = 100.0 * wins / episode
             loss_val = loss.item() if isinstance(loss, torch.Tensor) else loss
-            print(
-                f"Episode {episode} | Reward: {episode_reward:.2f} | Loss: {loss_val:.4f} | "
-                f"Epsilon: {epsilon:.3f} | WinRate: {win_rate:.2f} %"
+            logging.info(
+                "Episode %d | Reward: %.2f | Loss: %.4f | Epsilon: %.3f | WinRate: %.2f %%",
+                episode,
+                episode_reward,
+                loss_val,
+                epsilon,
+                win_rate,
             )
             csv_logger.writerow([episode, episode_reward, loss_val, epsilon, win_rate])
 
@@ -341,6 +346,7 @@ def train(config) -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     config = load_config()
     parser = argparse.ArgumentParser(description="Train DQN on Klondike")
     parser.add_argument(

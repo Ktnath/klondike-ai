@@ -7,9 +7,10 @@ from typing import Tuple, Dict, Any, List
 
 try:
     from klondike_core import Engine, Move
-except Exception:  # pragma: no cover - allow import failure in docs
-    Engine = None
-    Move = None
+except Exception as exc:  # pragma: no cover - explicit error
+    raise ImportError(
+        "Failed to import klondike_core. Build the Rust extension before running."
+    ) from exc
 
 from .reward import compute_reward
 
