@@ -1,12 +1,17 @@
 [package]
-name = "klondike-cli"
+name = "klondike_cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-klondike-core = { path = "../core" }
-klondike-ai = { path = "../ai" }
+klondike_core = { path = "../core" }
+klondike_ai = { path = "../ai" }
 colored.workspace = true
 signal-hook.workspace = true
+
+[[bin]]
+name = "klondike_cli"
+path = "src/main.rs"
+
