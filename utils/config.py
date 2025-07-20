@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict
 
+import logging
 import yaml
 
 
@@ -43,5 +44,8 @@ def load_config(path: str = "config.yaml") -> DotDict:
 
     with config_path.open("r", encoding="utf-8") as f:
         data: Dict[str, Any] = yaml.safe_load(f) or {}
+
+    if "training" in data and "learning_rate" not in data.get("training", {}):
+        logging.warning("Missing 'learning_rate' in training config")
 
     return DotDict(data)

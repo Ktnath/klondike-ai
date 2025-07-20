@@ -4,6 +4,7 @@ import os
 import time
 from ast import literal_eval
 from typing import List, Dict, Any
+import logging
 
 
 def load_episode(path: str) -> List[Dict[str, Any]]:
@@ -44,8 +45,8 @@ def replay_console(steps: List[Dict[str, Any]], speed: float) -> None:
             f"epsilon={row['epsilon']:.2f} | done={row['done']} | "
             f"cumulative={row['cumulative_reward']:.2f}"
         )
-        print(line)
-        print(f"observation: {summarize_obs(row['observation'])}")
+        logging.info(line)
+        logging.info("observation: %s", summarize_obs(row["observation"]))
         time.sleep(max(speed, 0))
 
 
@@ -95,10 +96,11 @@ setInterval(()=>{{idx=(idx+1)%rows.length;highlight();}}, delay);
 </html>"""
     with open(output, "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"HTML replay saved to {output}")
+    logging.info("HTML replay saved to %s", output)
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Replay a recorded Klondike episode")
     parser.add_argument("--file", required=True, help="CSV episode file")
     parser.add_argument("--speed", type=float, default=1.0, help="Delay between steps in seconds")

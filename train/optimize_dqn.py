@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import logging
 from typing import Any
 
 import optuna
@@ -58,12 +59,13 @@ def log_best_trials(study: optuna.Study, trial: optuna.Trial) -> None:
         key=lambda t: t.value,
         reverse=True,
     )[:5]
-    print("Top 5 trials so far:")
+    logging.info("Top 5 trials so far:")
     for rank, t in enumerate(top, 1):
-        print(f"  {rank}. Trial {t.number} -> {t.value:.4f}")
+        logging.info("  %d. Trial %d -> %.4f", rank, t.number, t.value)
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Optimize DQN hyperparameters")
     parser.add_argument("--trials", type=int, default=30, help="Number of trials")
     args = parser.parse_args()
