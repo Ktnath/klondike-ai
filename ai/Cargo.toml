@@ -7,7 +7,7 @@ authors.workspace = true
 
 [lib]
 name = "klondike_ai"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 klondike_core = { path = "../core" }
@@ -17,6 +17,7 @@ torch.workspace = true
 tqdm.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+rand.workspace = true
 
 [tool.maturin]
 module-name = "klondike_ai"

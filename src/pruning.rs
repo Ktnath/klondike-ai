@@ -7,7 +7,7 @@ use crate::{
 pub trait Pruner {
     #[must_use]
     // the game state is before doing the move `m`
-    fn update(&self, m: Move, rev_m: Option<Move>, m: ExtraInfo) -> Self;
+    fn update(&self, mv: Move, rev: Option<Move>, extra: ExtraInfo) -> Self;
 
     #[must_use]
     fn prune_moves(&self, game: &Solitaire) -> MoveMask;
@@ -32,8 +32,8 @@ pub struct CyclePruner {
 }
 
 impl Pruner for CyclePruner {
-    fn update(&self, _: Move, rev_m: Option<Move>, _: ExtraInfo) -> Self {
-        Self { rev_move: rev_m }
+    fn update(&self, _: Move, rev: Option<Move>, _: ExtraInfo) -> Self {
+        Self { rev_move: rev }
     }
 
     fn prune_moves(&self, _: &Solitaire) -> MoveMask {
@@ -60,10 +60,10 @@ impl Default for FullPruner {
 }
 
 impl Pruner for FullPruner {
-    fn update(&self, m: Move, rev_m: Option<Move>, extra: ExtraInfo) -> Self {
+    fn update(&self, mv: Move, rev: Option<Move>, extra: ExtraInfo) -> Self {
         Self {
-            cycle: self.cycle.update(m, rev_m, extra),
-            last_move: m,
+            cycle: self.cycle.update(mv, rev, extra),
+            last_move: mv,
             last_extra: extra,
             last_draw: match m {
                 Move::DeckPile(c) => Some(c),

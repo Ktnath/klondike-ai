@@ -1,6 +1,5 @@
 use colored::*;
-use klondike_core::{Engine, Move};
-use klondike_ai::{NeuralNet, MCTS};
+use klondike_ai::{Engine, Move, NeuralNet, MCTS};
 use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
@@ -78,7 +77,7 @@ fn play_ai(engine: &mut Engine, mcts: &mut MCTS) -> io::Result<()> {
     while !engine.get_state().is_won() {
         display_game_state(engine);
 
-        let probs = mcts.search(engine, 0.0); // Température 0 pour le meilleur coup
+        let probs = mcts.search(engine, 0.0, 10); // Température 0 pour le meilleur coup
         let best_move = probs.iter()
             .max_by(|(_, p1), (_, p2)| p1.partial_cmp(p2).unwrap())
             .map(|(m, _)| *m)
