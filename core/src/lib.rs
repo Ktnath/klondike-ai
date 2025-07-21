@@ -1,15 +1,17 @@
 mod card;
-mod state;
-mod moves;
 mod engine;
+mod moves;
+mod reward;
+mod state;
 
 use pyo3::prelude::*;
 use serde_json;
 
 pub use card::Card;
-pub use state::GameState;
-pub use moves::Move;
 pub use engine::Engine;
+pub use moves::Move;
+pub use reward::compute_base_reward;
+pub use state::GameState;
 
 /// Nombre de cartes dans un jeu
 pub const N_CARDS: u32 = 52;
@@ -73,6 +75,13 @@ pub fn is_won(state: &str) -> PyResult<bool> {
 }
 
 #[pyfunction]
+pub fn compute_base_reward_json(game_state_json: &str) -> PyResult<f32> {
+    let state: GameState = serde_json::from_str(game_state_json)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+    Ok(reward::compute_base_reward(&state))
+}
+
+#[pyfunction]
 pub fn move_index(action: &str) -> PyResult<usize> {
     let m: Move = serde_json::from_str(action)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
@@ -92,6 +101,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_observation, m)?)?;
     m.add_function(wrap_pyfunction!(foundation_count, m)?)?;
     m.add_function(wrap_pyfunction!(is_won, m)?)?;
+    m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
     m.add_function(wrap_pyfunction!(move_index, m)?)?;
     m.add_function(wrap_pyfunction!(move_from_index, m)?)?;
     Ok(())
