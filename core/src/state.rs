@@ -1,7 +1,6 @@
 use pyo3::prelude::*;
 use serde::{Serialize, Deserialize};
-use arrayvec::ArrayVec;
-use crate::{Card, N_CARDS, N_PILES, N_FOUNDATIONS, N_SUITS};
+use crate::{Card, N_CARDS, N_PILES, N_FOUNDATIONS};
 
 #[pyclass]
 #[derive(Clone, Serialize, Deserialize)]
@@ -25,7 +24,9 @@ impl GameState {
             .collect();
 
         use rand::seq::SliceRandom;
-        let mut rng = rand::thread_rng();
+        use rand::SeedableRng;
+        use rand::rngs::SmallRng;
+        let mut rng = SmallRng::seed_from_u64(0);
         cards.shuffle(&mut rng);
 
         let mut tableau = [Vec::new(), Vec::new(), Vec::new(), Vec::new(),
@@ -96,6 +97,10 @@ impl GameState {
 
     pub fn get_score(&self) -> i32 {
         self.score
+    }
+
+    pub fn foundation_count(&self) -> usize {
+        self.foundations.iter().map(|f| f.len()).sum()
     }
 
     pub fn encode_observation(&self) -> Vec<f32> {

@@ -147,6 +147,7 @@ dependencies = [
  "rand",
  "rand_mt",
  "serde",
+ "serde_json",
  "static_assertions",
  "uint",
 ]

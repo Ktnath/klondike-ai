@@ -1,7 +1,6 @@
-use pyo3::prelude::*;
+use serde::{Serialize, Deserialize};
 
-#[pyclass]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Move {
     // Piocher une carte du talon
     DrawCard,
