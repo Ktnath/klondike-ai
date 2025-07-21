@@ -1,6 +1,5 @@
 use pyo3::prelude::*;
 use pyo3::types::IntoPyDict;
-use numpy::{PyArray1, PyArray2};
 use std::path::Path;
 
 #[pyclass]
@@ -13,7 +12,7 @@ pub struct NeuralNet {
 impl NeuralNet {
     pub fn new(input_shape: usize, action_size: usize) -> PyResult<Self> {
         Python::with_gil(|py| {
-            let torch = py.import("torch")?;
+            let _torch = py.import("torch")?;
             let nn = py.import("torch.nn")?;
             let optim = py.import("torch.optim")?;
 

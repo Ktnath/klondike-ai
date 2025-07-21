@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use pyo3::prelude::*;
 use serde_json;
 
@@ -124,6 +125,7 @@ pub fn shuffle_seed() -> PyResult<u32> {
         .map(|d| d.as_nanos() as u64)
         .unwrap_or(0);
     let mut rng = rand::rngs::SmallRng::seed_from_u64(nanos);
+    #[allow(deprecated)]
     Ok(rng.gen::<u32>())
 }
 

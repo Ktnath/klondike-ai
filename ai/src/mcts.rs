@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::f32;
-use rand::seq::SliceRandom;
 use crate::{Engine, Move, NeuralNet};
 
 #[derive(Debug)]
@@ -102,7 +101,7 @@ impl MCTS {
         let edges = self.edges.get(&state_str).unwrap();
         let total_visits: i32 = edges.iter().map(|e| e.visit_count).sum();
 
-        let (best_move, best_edge) = moves.iter()
+        let (best_move, _best_edge) = moves.iter()
             .zip(edges.iter())
             .max_by(|(_, e1), (_, e2)| {
                 let score1 = self.uct_score(e1, total_visits as f32);
