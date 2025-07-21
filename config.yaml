@@ -1,6 +1,7 @@
 env:
   name: KlondikeEnv
   max_steps: 500
+  use_rust_reward: true
 
 training:
   episodes: 5000

@@ -1,11 +1,27 @@
 """Reward function for Klondike DQN agent."""
+
 from typing import Any
+import json
+import logging
+
+from utils.config import load_config
 
 try:
-    from klondike_core import encode_observation, foundation_count
+    from klondike_core import (
+        encode_observation,
+        foundation_count,
+        compute_base_reward_json,
+    )
 except Exception:  # pragma: no cover - fallback if extension missing
     encode_observation = None
     foundation_count = None
+    compute_base_reward_json = None
+
+try:
+    _CFG = load_config()
+    USE_RUST_REWARD = bool(getattr(_CFG.env, "use_rust_reward", True))
+except Exception:  # pragma: no cover - config may be missing
+    USE_RUST_REWARD = True
 
 
 def _count_face_up(state: Any) -> int:
@@ -62,6 +78,15 @@ def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> floa
 
     reward = 0.0
 
+    if compute_base_reward_json is not None and USE_RUST_REWARD:
+        try:
+            reward = float(compute_base_reward_json(next_state))
+        except Exception as exc:  # pragma: no cover - runtime error
+            logging.warning("Rust reward failed, falling back to Python: %s", exc)
+            reward = 0.0
+    elif compute_base_reward_json is None and USE_RUST_REWARD:
+        logging.info("klondike_core missing, using Python reward only")
+
     # Reward card flips
     flips = _count_face_up(next_state) - _count_face_up(state)
     if flips > 0:
@@ -73,18 +98,7 @@ def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> floa
         reward += 1.0 * found_diff
 
     # Penalize actions with no effect
-    if flips <= 0 and found_diff == 0:
-        # Distinguish invalid versus useless by comparing states
-        try:
-            same = state.encode_observation() == next_state.encode_observation()
-        except AttributeError:
-            if encode_observation is not None:
-                same = encode_observation(state) == encode_observation(next_state)
-            else:
-                same = False
-        if same:
-            reward -= 0.1
-        else:
-            reward -= 0.05
+    if flips <= 0 and found_diff <= 0:
+        reward -= 0.01
 
-    return reward
+    return float(reward)
