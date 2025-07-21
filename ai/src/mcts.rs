@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 use std::f32;
 use rand::seq::SliceRandom;
-use crate::NeuralNet;
-use klondike_core::{Engine, Move};
+use crate::{Engine, Move, NeuralNet};
 
 #[derive(Debug)]
 struct Edge {

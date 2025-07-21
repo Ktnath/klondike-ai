@@ -4,7 +4,33 @@ mod coach;
 
 use pyo3::prelude::*;
 use serde_json;
-use klondike_core::{GameState, Engine};
+/// Placeholder types used for compiling the examples.
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct GameState {}
+
+impl GameState {
+    pub fn encode_observation(&self) -> Vec<f32> { Vec::new() }
+    pub fn is_won(&self) -> bool { false }
+    pub fn get_score(&self) -> i32 { 0 }
+}
+
+#[derive(Debug, Clone)]
+pub struct Engine {}
+
+impl Engine {
+    pub fn new() -> Self { Self {} }
+    pub fn from_state(_state: GameState) -> Self { Self {} }
+    pub fn get_state(&self) -> GameState { GameState {} }
+    pub fn get_available_moves(&self) -> Vec<Move> { Vec::new() }
+    pub fn make_move(&mut self, _m: &Move) {}
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Move;
+
+impl Move {
+    pub fn get_move_index(&self) -> usize { 0 }
+}
 
 pub use network::NeuralNet;
 pub use mcts::MCTS;
