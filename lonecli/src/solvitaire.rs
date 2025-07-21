@@ -1,6 +1,6 @@
 use core::fmt;
 
-use lonelybot::{
+use klondike_core::{
     card::{Card, N_SUITS},
     deck::N_PILES,
     formatter::NUMBERS,
@@ -99,7 +99,7 @@ impl fmt::Display for Solvitaire {
 mod tests {
     use std::num::NonZeroU8;
 
-    use lonelybot::{shuffler, standard::StandardSolitaire};
+    use klondike_core::{shuffler, standard::StandardSolitaire};
     use serde_json::{json, Value};
 
     use super::Solvitaire;

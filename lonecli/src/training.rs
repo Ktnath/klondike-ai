@@ -1,8 +1,8 @@
-use lonelybot::analysis::{ranked_moves, HeuristicConfig, PlayStyle};
-use lonelybot::engine::SolitaireEngine;
-use lonelybot::partial::PartialState;
-use lonelybot::pruning::FullPruner;
-use lonelybot::state::Solitaire;
+use klondike_core::analysis::{ranked_moves, HeuristicConfig, PlayStyle};
+use klondike_core::engine::SolitaireEngine;
+use klondike_core::partial::PartialState;
+use klondike_core::pruning::FullPruner;
+use klondike_core::state::Solitaire;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use serde_json::{json, to_string, Value};

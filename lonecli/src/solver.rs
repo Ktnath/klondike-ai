@@ -1,5 +1,5 @@
 use core::time::Duration;
-use lonelybot::{
+use klondike_core::{
     graph::{graph_with_tracking, Graph},
     solver::{solve_with_tracking, HistoryVec, SearchResult},
     state::Solitaire,

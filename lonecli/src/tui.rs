@@ -1,11 +1,11 @@
 use core::fmt;
 
-use lonelybot::card::{Card, N_SUITS};
-use lonelybot::deck::{Drawable, N_PILES};
-use lonelybot::formatter::{NUMBERS, SYMBOLS};
-use lonelybot::stack::Stack;
-use lonelybot::standard::{HiddenVec, PileVec, StandardSolitaire};
-use lonelybot::state::Solitaire;
+use klondike_core::card::{Card, N_SUITS};
+use klondike_core::deck::{Drawable, N_PILES};
+use klondike_core::formatter::{NUMBERS, SYMBOLS};
+use klondike_core::stack::Stack;
+use klondike_core::standard::{HiddenVec, PileVec, StandardSolitaire};
+use klondike_core::state::Solitaire;
 
 use colored::{Color, Colorize};
 
