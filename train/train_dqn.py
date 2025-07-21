@@ -19,7 +19,8 @@ import torch.optim as optim
 
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from env.klondike_env import KlondikeEnv
 from utils.config import load_config
@@ -184,6 +185,7 @@ def train(config) -> None:
 
     loss = torch.tensor(0.0)
     for episode in range(1, episodes + 1):
+        logging.info("Starting episode %d", episode)
         state = env.reset()
         done = False
         episode_reward = 0.0
@@ -215,6 +217,13 @@ def train(config) -> None:
             valid_actions = env.get_valid_actions()
             if random.random() < epsilon:
                 action = random.choice(valid_actions)
+                logging.debug(
+                    "Episode %d step %d: random action %s (epsilon %.3f)",
+                    episode,
+                    step_num if ep_logging else global_step,
+                    action,
+                    epsilon,
+                )
             else:
                 with torch.no_grad():
                     q_values = policy_net(
@@ -222,8 +231,21 @@ def train(config) -> None:
                     )
                     q_valid = q_values[valid_actions]
                     action = valid_actions[int(torch.argmax(q_valid).item())]
+                logging.debug(
+                    "Episode %d step %d: policy action %s",
+                    episode,
+                    step_num if ep_logging else global_step,
+                    action,
+                )
 
             next_state, reward, done, info = env.step(action)
+            logging.debug(
+                "Episode %d step %d: reward %.2f done %s",
+                episode,
+                step_num if ep_logging else global_step,
+                reward,
+                done,
+            )
             episode_reward += reward
             if ep_logging:
                 ep_writer.writerow(
@@ -311,6 +333,8 @@ def train(config) -> None:
                     )
                     optimizer.step()
 
+                logging.debug("Updated weights with loss %.4f", loss.item())
+
                 buffer.update_priorities(idxs, td_errors)
 
                 if global_step % target_update == 0:
@@ -318,6 +342,7 @@ def train(config) -> None:
             global_step += 1
 
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        logging.debug("Epsilon decayed to %.3f", epsilon)
         if env.state.is_won():
             wins += 1
 
@@ -336,17 +361,28 @@ def train(config) -> None:
 
         if episode % save_interval == 0:
             base, ext = os.path.splitext(save_path)
-            torch.save(policy_net.state_dict(), f"{base}_{episode}{ext}")
+            path = f"{base}_{episode}{ext}"
+            torch.save(policy_net.state_dict(), path)
+            logging.info("Saved checkpoint to %s", path)
 
         if ep_logging:
             ep_file.close()
 
+        logging.info(
+            "Finished episode %d with total reward %.2f", episode, episode_reward
+        )
+
     torch.save(policy_net.state_dict(), save_path)
+    logging.info("Model saved to %s", save_path)
     log_file.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        level=logging.INFO,
+    )
+
     config = load_config()
     parser = argparse.ArgumentParser(description="Train DQN on Klondike")
     parser.add_argument(
@@ -355,6 +391,15 @@ if __name__ == "__main__":
         default=config.training.episodes,
         help="Number of training episodes",
     )
+    parser.add_argument(
+        "--log",
+        "--log-level",
+        dest="log_level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Logging level",
+    )
     args = parser.parse_args()
+    logging.getLogger().setLevel(getattr(logging, args.log_level))
     config.training.episodes = args.episodes
     train(config)
