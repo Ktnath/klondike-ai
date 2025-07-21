@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::path::Path;
 use rand::{Rng, SeedableRng};
 use crate::{Engine, NeuralNet, MCTS, TrainingConfig};
 
@@ -88,6 +87,7 @@ impl Coach {
             } else {
                 // Échantillonner selon les probabilités
                 let mut rng = rand::rngs::SmallRng::seed_from_u64(0);
+                #[allow(deprecated)]
                 let r: f32 = rng.gen();
                 let mut sum = 0.0;
                 let mut selected = probs[0].0;

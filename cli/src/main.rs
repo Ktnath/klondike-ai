@@ -1,5 +1,5 @@
 use colored::*;
-use klondike_ai::{Engine, Move, NeuralNet, MCTS};
+use klondike_ai::{Engine, NeuralNet, MCTS};
 use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
