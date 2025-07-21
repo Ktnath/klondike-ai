@@ -107,12 +107,12 @@ class ReplayBuffer:
         weights = (total * probs[indices]) ** (-beta)
         weights /= weights.max()
         return (
-            torch.tensor(states, dtype=torch.float32),
-            torch.tensor(actions, dtype=torch.int64),
-            torch.tensor(rewards, dtype=torch.float32),
-            torch.tensor(next_states, dtype=torch.float32),
-            torch.tensor(dones, dtype=torch.float32),
-            torch.tensor(weights, dtype=torch.float32),
+            torch.from_numpy(np.array(states)).float(),
+            torch.from_numpy(np.array(actions)).long(),
+            torch.from_numpy(np.array(rewards)).float(),
+            torch.from_numpy(np.array(next_states)).float(),
+            torch.from_numpy(np.array(dones)).float(),
+            torch.from_numpy(np.array(weights)).float(),
             indices,
         )
 
