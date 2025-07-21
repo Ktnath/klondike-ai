@@ -26,9 +26,10 @@ from .reward import compute_reward
 class KlondikeEnv(gym.Env):
     """Environment wrapping the Rust Klondike engine for RL."""
 
-    def __init__(self) -> None:
+    def __init__(self, seed: str | None = None) -> None:
         super().__init__()
         self.state: str | None = None
+        self.seed: str | None = seed
         self.action_space = gym.spaces.Discrete(96)
         # Observation length used by existing training code
         self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(156,), dtype=np.float32)
@@ -44,11 +45,28 @@ class KlondikeEnv(gym.Env):
             obs = obs[:156]
         return obs
 
-    def reset(self) -> np.ndarray:
-        """Reset environment and return initial observation."""
+    def reset(self, seed: str | None = None) -> np.ndarray:
+        """Reset environment and return initial observation.
+
+        Parameters
+        ----------
+        seed:
+            Optional seed to create a deterministic game. If provided, it is
+            forwarded to the Rust engine when available.
+        """
         if new_game is None:
             raise RuntimeError("klondike_core engine not available")
-        self.state = new_game()
+        if seed is None:
+            seed = self.seed
+        self.seed = seed
+        if seed is not None:
+            try:
+                self.state = new_game(seed)
+            except TypeError:
+                # Fallback if new_game does not accept a seed
+                self.state = new_game()
+        else:
+            self.state = new_game()
         return self._encode_state()
 
     def get_valid_actions(self) -> List[int]:

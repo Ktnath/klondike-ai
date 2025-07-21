@@ -27,3 +27,11 @@ logging:
   log_interval: 100
   save_interval: 500
   enable_logging: true
+
+# Hybrid learning options
+imitation_learning: true
+dagger: true
+reward_shaping: true
+critical_weighting: true
+expert_dataset: "data/expert_dataset.jsonl"
+dagger_dataset: "data/dagger_buffer.jsonl"

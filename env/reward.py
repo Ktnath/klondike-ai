@@ -20,8 +20,10 @@ except Exception:  # pragma: no cover - fallback if extension missing
 try:
     _CFG = load_config()
     USE_RUST_REWARD = bool(getattr(_CFG.env, "use_rust_reward", True))
+    USE_SHAPING = bool(getattr(_CFG, "reward_shaping", False))
 except Exception:  # pragma: no cover - config may be missing
     USE_RUST_REWARD = True
+    USE_SHAPING = False
 
 
 def _count_face_up(state: Any) -> int:
@@ -59,6 +61,13 @@ def _foundation_count(state: Any) -> int:
     return 0
 
 
+def is_critical_move(prev_state: Any, next_state: Any) -> bool:
+    """Return True if the transition reveals or frees important cards."""
+    found_diff = _foundation_count(next_state) - _foundation_count(prev_state)
+    flips = _count_face_up(next_state) - _count_face_up(prev_state)
+    return found_diff > 0 or flips > 0
+
+
 def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> float:
     """Compute a shaped reward for the transition.
 
@@ -87,18 +96,22 @@ def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> floa
     elif compute_base_reward_json is None and USE_RUST_REWARD:
         logging.info("klondike_core missing, using Python reward only")
 
-    # Reward card flips
     flips = _count_face_up(next_state) - _count_face_up(state)
-    if flips > 0:
-        reward += 0.1 * flips
-
-    # Reward foundation progress
     found_diff = _foundation_count(next_state) - _foundation_count(state)
-    if found_diff > 0:
-        reward += 1.0 * found_diff
 
-    # Penalize actions with no effect
-    if flips <= 0 and found_diff <= 0:
-        reward -= 0.01
+    if USE_SHAPING:
+        if flips > 0:
+            reward += 0.1 * flips + 0.05
+        if found_diff > 0:
+            reward += 1.0 * found_diff
+        if flips <= 0 and found_diff <= 0:
+            reward -= 0.01
+    else:
+        if flips > 0:
+            reward += 0.1 * flips
+        if found_diff > 0:
+            reward += 1.0 * found_diff
+        if flips <= 0 and found_diff <= 0:
+            reward -= 0.01
 
     return float(reward)

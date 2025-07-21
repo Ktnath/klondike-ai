@@ -16,6 +16,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import json
+
+try:
+    from klondike_core import solve_klondike, move_index
+except Exception:  # pragma: no cover
+    solve_klondike = None
+    move_index = None
 
 import sys
 import os
@@ -23,7 +30,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from env.klondike_env import KlondikeEnv
+from env.reward import is_critical_move
 from utils.config import load_config
+from dagger_dataset import DaggerDataset
 
 
 class DQN(nn.Module):
@@ -77,12 +86,12 @@ class ReplayBuffer:
     def __init__(self, capacity: int, alpha: float = 0.6) -> None:
         self.capacity = capacity
         self.alpha = alpha
-        self.buffer: List[Tuple[np.ndarray, int, float, np.ndarray, bool]] = []
+        self.buffer: List[Tuple[np.ndarray, int, float, np.ndarray, bool, float]] = []
         self.priorities = np.zeros((capacity,), dtype=np.float32)
         self.pos = 0
 
     def push(
-        self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool]
+        self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool, float]
     ) -> None:
         """Store a transition with maximal priority."""
         max_prio = self.priorities.max() if self.buffer else 1.0
@@ -103,7 +112,7 @@ class ReplayBuffer:
         probs /= probs.sum()
         indices = np.random.choice(len(self.buffer), batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
-        states, actions, rewards, next_states, dones = zip(*samples)
+        states, actions, rewards, next_states, dones, prio_w = zip(*samples)
         total = len(self.buffer)
         weights = (total * probs[indices]) ** (-beta)
         weights /= weights.max()
@@ -114,6 +123,7 @@ class ReplayBuffer:
             torch.from_numpy(np.array(next_states)).float(),
             torch.from_numpy(np.array(dones)).float(),
             torch.from_numpy(np.array(weights)).float(),
+            torch.from_numpy(np.array(prio_w)).float(),
             indices,
         )
 
@@ -145,11 +155,46 @@ def train(config) -> None:
 
     optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
 
+    if use_imitation and os.path.exists(expert_dataset_path):
+        logging.info("Pretraining from expert dataset %s", expert_dataset_path)
+        obs_list: List[List[float]] = []
+        act_list: List[int] = []
+        w_list: List[float] = []
+        with open(expert_dataset_path, "r", encoding="utf-8") as f:
+            for line in f:
+                d = json.loads(line)
+                obs_list.append(d["observation"])
+                act_list.append(d["action"])
+                w_list.append(2.0 if d.get("is_critical") else 1.0)
+        if obs_list:
+            dataset = torch.utils.data.TensorDataset(
+                torch.tensor(obs_list, dtype=torch.float32),
+                torch.tensor(act_list, dtype=torch.long),
+                torch.tensor(w_list, dtype=torch.float32),
+            )
+            loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+            for _ in range(3):
+                for bx, by, bw in loader:
+                    bx, by, bw = bx.to(device), by.to(device), bw.to(device)
+                    optimizer.zero_grad()
+                    logits = policy_net(bx)
+                    loss = F.cross_entropy(logits, by, reduction="none")
+                    (loss * bw).mean().backward()
+                    optimizer.step()
+            target_net.load_state_dict(policy_net.state_dict())
+
     per_cfg = config.training.get("per", {}) if hasattr(config.training, "get") else {}
     per_alpha = per_cfg.get("alpha", 0.6)
     per_beta = per_cfg.get("beta", 0.4)
 
     buffer = ReplayBuffer(config.training.buffer_size, alpha=per_alpha)
+    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.jsonl")
+    dagger_dataset_path = getattr(config, "dagger_dataset", "data/dagger_buffer.jsonl")
+    use_imitation = bool(getattr(config, "imitation_learning", False))
+    use_dagger = bool(getattr(config, "dagger", False))
+    use_weighting = bool(getattr(config, "critical_weighting", False))
+
+    dagger_ds = DaggerDataset(dagger_dataset_path)
     batch_size = config.training.batch_size
     gamma = config.training.gamma
     epsilon = config.training.epsilon.start
@@ -186,7 +231,16 @@ def train(config) -> None:
     loss = torch.tensor(0.0)
     for episode in range(1, episodes + 1):
         logging.info("Starting episode %d", episode)
-        state = env.reset()
+        seed = str(random.randint(0, 2**32 - 1))
+        state = env.reset(seed)
+        expert_moves = []
+        if use_dagger and solve_klondike and move_index:
+            try:
+                sol = json.loads(solve_klondike(seed))
+                expert_moves = [move_index(m) for m in sol.get("moves", [])]
+            except Exception as exc:
+                logging.warning("Solver failed: %s", exc)
+        expert_step = 0
         done = False
         episode_reward = 0.0
         if ep_logging:
@@ -247,6 +301,11 @@ def train(config) -> None:
                 done,
             )
             episode_reward += reward
+            if use_dagger and expert_step < len(expert_moves):
+                expert_action = expert_moves[expert_step]
+                if action != expert_action:
+                    dagger_ds.add(current_state.tolist(), expert_action)
+                expert_step += 1
             if ep_logging:
                 ep_writer.writerow(
                     {
@@ -261,7 +320,8 @@ def train(config) -> None:
                 )
                 ep_file.flush()
                 step_num += 1
-            buffer.push(state, action, reward, next_state, done)
+            priority = 2.0 if use_weighting and is_critical_move(state, next_state) else 1.0
+            buffer.push(state, action, reward, next_state, done, priority)
             state = next_state
 
             if len(buffer) >= batch_size:
@@ -273,6 +333,7 @@ def train(config) -> None:
                     b_next_states,
                     b_dones,
                     weights,
+                    prio_w,
                     idxs,
                 ) = sample
                 b_states = b_states.to(device)
@@ -281,6 +342,7 @@ def train(config) -> None:
                 b_next_states = b_next_states.to(device)
                 b_dones = b_dones.to(device)
                 weights = weights.to(device)
+                prio_w = prio_w.to(device)
 
                 if use_amp:
                     with torch.cuda.amp.autocast():
@@ -301,7 +363,7 @@ def train(config) -> None:
                             expected_q = b_rewards + gamma * (1 - b_dones) * target_q
                         td_errors = expected_q - q_values
                         loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
-                        loss = (loss * weights).mean()
+                        loss = (loss * weights * prio_w).mean()
                     optimizer.zero_grad()
                     scaler.scale(loss).backward()
                     torch.nn.utils.clip_grad_norm_(
@@ -325,7 +387,7 @@ def train(config) -> None:
                         expected_q = b_rewards + gamma * (1 - b_dones) * target_q
                     td_errors = expected_q - q_values
                     loss = F.smooth_l1_loss(q_values, expected_q, reduction="none")
-                    loss = (loss * weights).mean()
+                    loss = (loss * weights * prio_w).mean()
                     optimizer.zero_grad()
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(
