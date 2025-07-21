@@ -1,106 +1,118 @@
-use pyo3::prelude::*;
+pub const N_SUITS: u8 = 4;
+pub const N_RANKS: u8 = 13;
+pub const N_CARDS: u8 = N_SUITS * N_RANKS;
+pub const KING_RANK: u8 = N_RANKS - 1;
 
-use serde::{Serialize, Deserialize};
+pub(crate) const SUIT_MASK: [u64; N_SUITS as usize] = [
+    0x4141_4141_4141_4141,
+    0x8282_8282_8282_8282,
+    0x1414_1414_1414_1414,
+    0x2828_2828_2828_2828,
+];
 
-#[pyclass]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Card {
-    rank: u8,
-    suit: u8,
-    is_face_up: bool,
+pub(crate) const KING_MASK: u64 = 0xF << (N_SUITS * KING_RANK);
+
+pub(crate) const HALF_MASK: u64 = 0x3333_3333_3333_3333;
+pub(crate) const ALT_MASK: u64 = 0x5555_5555_5555_5555;
+pub(crate) const RANK_MASK: u64 = 0x1111_1111_1111_1111;
+
+pub(crate) const COLOR_MASK: [u64; 2] = [SUIT_MASK[0] | SUIT_MASK[1], SUIT_MASK[2] | SUIT_MASK[3]];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Card(u8);
+
+const fn suit_xor_color(v: u8) -> u8 {
+    v ^ ((v >> 1) & 2)
 }
 
 impl Card {
-    pub fn new(rank: u8, suit: u8) -> Self {
-        assert!(rank < 13, "Le rang doit être entre 0 et 12");
-        assert!(suit < 4, "La couleur doit être entre 0 et 3");
-        Self {
-            rank,
-            suit,
-            is_face_up: false,
+    pub const DEFAULT: Self = Self::new(0, 0);
+    pub const INVALID: Self = Self::new(N_RANKS, 0);
+
+    #[must_use]
+    pub const fn new(rank: u8, suit: u8) -> Self {
+        debug_assert!(rank <= N_RANKS && suit < N_SUITS);
+        let value = rank * N_SUITS + suit;
+        Self(suit_xor_color(value))
+    }
+
+    #[must_use]
+    pub const fn rank(self) -> u8 {
+        self.0 / N_SUITS
+    }
+
+    // actually this function check if it is king or fake card
+    #[must_use]
+    pub const fn is_king(self) -> bool {
+        self.rank() >= KING_RANK
+    }
+
+    #[must_use]
+    pub const fn suit(self) -> u8 {
+        suit_xor_color(self.0) % N_SUITS
+    }
+
+    #[must_use]
+    pub const fn split(self) -> (u8, u8) {
+        (self.rank(), self.suit())
+    }
+
+    #[must_use]
+    pub const fn swap_suit(self) -> Self {
+        // keeping the color of the suit and switch to the other type
+        // also keeping the rank
+        Self(self.0 ^ 1)
+    }
+
+    #[must_use]
+    pub const fn swap_color(self) -> Self {
+        Self(self.0 ^ 2)
+    }
+
+    #[must_use]
+    pub const fn increase_rank_swap_color(self) -> Self {
+        Self(self.0 + N_SUITS)
+    }
+
+    #[must_use]
+    pub const fn reduce_rank_swap_color(self) -> Self {
+        Self(self.0.saturating_sub(N_SUITS))
+    }
+
+    #[must_use]
+    pub const fn go_after(self, other: Option<Self>) -> bool {
+        if let Some(other) = other {
+            // let card_b = other.split();
+            // card_a.0 == card_b.0 + 1 && (card_a.1 ^ card_b.1) & 2 == 2
+            ((self.0 + N_SUITS) ^ other.0) < 2
+        } else {
+            self.is_king()
         }
     }
 
-    pub fn rank(&self) -> u8 {
-        self.rank
+    #[must_use]
+    pub const fn mask_index(self) -> u8 {
+        self.0
     }
 
-    pub fn suit(&self) -> u8 {
-        self.suit
+    #[must_use]
+    pub(crate) const fn from_mask_index(idx: u8) -> Self {
+        Self(idx)
     }
 
-    pub fn is_face_up(&self) -> bool {
-        self.is_face_up
+    #[must_use]
+    pub(crate) const fn mask(self) -> u64 {
+        1u64 << self.mask_index()
     }
 
-    pub fn flip(&mut self) {
-        self.is_face_up = !self.is_face_up;
-    }
-
-    pub fn is_red(&self) -> bool {
-        self.suit == 1 || self.suit == 2 // Cœurs ou Carreaux
-    }
-
-    pub fn is_black(&self) -> bool {
-        self.suit == 0 || self.suit == 3 // Piques ou Trèfles
-    }
-
-    pub fn can_stack_on(&self, other: &Card) -> bool {
-        if !self.is_face_up || !other.is_face_up {
-            return false;
+    #[must_use]
+    pub(crate) const fn from_mask(v: u64) -> Option<Self> {
+        let v = v.trailing_zeros();
+        if v < N_CARDS as u32 {
+            #[allow(clippy::cast_possible_truncation)]
+            Some(Self::from_mask_index(v as u8))
+        } else {
+            None
         }
-        self.rank == other.rank - 1 && self.is_red() != other.is_red()
-    }
-
-    pub fn can_place_on_foundation(&self, foundation_top: Option<&Card>) -> bool {
-        if !self.is_face_up {
-            return false;
-        }
-        match foundation_top {
-            None => self.rank == 0, // As
-            Some(top) => {
-                self.suit == top.suit && self.rank == top.rank + 1
-            }
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_card_creation() {
-        let card = Card::new(0, 0);
-        assert_eq!(card.rank(), 0);
-        assert_eq!(card.suit(), 0);
-        assert!(!card.is_face_up());
-    }
-
-    #[test]
-    fn test_card_color() {
-        let spade = Card::new(0, 0);
-        let heart = Card::new(0, 1);
-        assert!(spade.is_black());
-        assert!(heart.is_red());
-    }
-
-    #[test]
-    fn test_card_stacking() {
-        let mut black_king = Card::new(12, 0);
-        let mut red_queen = Card::new(11, 1);
-        black_king.flip();
-        red_queen.flip();
-        assert!(red_queen.can_stack_on(&black_king));
-    }
-
-    #[test]
-    fn test_foundation_placement() {
-        let mut ace_spades = Card::new(0, 0);
-        let mut two_spades = Card::new(1, 0);
-        ace_spades.flip();
-        two_spades.flip();
-        assert!(ace_spades.can_place_on_foundation(None));
-        assert!(two_spades.can_place_on_foundation(Some(&ace_spades)));
     }
 }
