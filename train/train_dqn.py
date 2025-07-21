@@ -155,6 +155,13 @@ def train(config) -> None:
 
     optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
 
+    # Configuration options that may be absent from config.yaml
+    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.jsonl")
+    dagger_dataset_path = getattr(config, "dagger_dataset", "data/dagger_buffer.jsonl")
+    use_imitation = bool(getattr(config, "imitation_learning", False))
+    use_dagger = bool(getattr(config, "dagger", False))
+    use_weighting = bool(getattr(config, "critical_weighting", False))
+
     if use_imitation and os.path.exists(expert_dataset_path):
         logging.info("Pretraining from expert dataset %s", expert_dataset_path)
         obs_list: List[List[float]] = []
@@ -188,11 +195,6 @@ def train(config) -> None:
     per_beta = per_cfg.get("beta", 0.4)
 
     buffer = ReplayBuffer(config.training.buffer_size, alpha=per_alpha)
-    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.jsonl")
-    dagger_dataset_path = getattr(config, "dagger_dataset", "data/dagger_buffer.jsonl")
-    use_imitation = bool(getattr(config, "imitation_learning", False))
-    use_dagger = bool(getattr(config, "dagger", False))
-    use_weighting = bool(getattr(config, "critical_weighting", False))
 
     dagger_ds = DaggerDataset(dagger_dataset_path)
     batch_size = config.training.batch_size
