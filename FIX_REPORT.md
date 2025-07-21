@@ -1,4 +1,4 @@
-- Removed unused imports from Rust modules (network.rs, mcts.rs, coach.rs, cli/main.rs).
+- Removed unused imports from Rust modules (network.rs, mcts.rs, coach.rs).
 - Added #[allow(dead_code)] to core crate to silence warnings for unused code.
 - Prefixed unused variables with underscore and added #[allow(deprecated)] where needed.
 - Ensured CLI only imports necessary symbols.
