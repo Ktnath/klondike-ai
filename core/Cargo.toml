@@ -14,6 +14,7 @@ static_assertions.workspace = true
 uint.workspace = true
 pyo3.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 
 [lib]
 name = "klondike_core"
