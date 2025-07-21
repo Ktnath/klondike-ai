@@ -6,15 +6,15 @@ mod training;
 
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use lonelybot::convert::convert_moves;
-// use lonelybot::dependencies::DependencyEngine;
-use lonelybot::engine::SolitaireEngine;
-use lonelybot::mcts_solver::pick_moves;
-use lonelybot::pruning::{CyclePruner, FullPruner, NoPruner};
-use lonelybot::shuffler::{self, CardDeck, U256};
-use lonelybot::state::{Encode, Solitaire};
-use lonelybot::tracking::DefaultTerminateSignal;
-use lonelybot::traverse::Control;
+use klondike_core::convert::convert_moves;
+// use klondike_core::dependencies::DependencyEngine;
+use klondike_core::engine::SolitaireEngine;
+use klondike_core::mcts_solver::pick_moves;
+use klondike_core::pruning::{CyclePruner, FullPruner, NoPruner};
+use klondike_core::shuffler::{self, CardDeck, U256};
+use klondike_core::state::{Encode, Solitaire};
+use klondike_core::tracking::DefaultTerminateSignal;
+use klondike_core::traverse::Control;
 use rand::prelude::*;
 use solvitaire::Solvitaire;
 use std::collections::HashSet;
@@ -26,8 +26,8 @@ use std::time::Duration;
 use std::{io::Write, time::Instant};
 use std::{thread, time};
 
-use lonelybot::solver::SearchResult;
-use lonelybot::standard::{Pos, StandardHistoryVec, StandardSolitaire};
+use klondike_core::solver::SearchResult;
+use klondike_core::standard::{Pos, StandardHistoryVec, StandardSolitaire};
 
 use crate::tui::print_game;
 

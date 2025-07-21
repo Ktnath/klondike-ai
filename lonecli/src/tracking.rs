@@ -1,6 +1,6 @@
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
-use lonelybot::tracking::SearchStatistics;
+use klondike_core::tracking::SearchStatistics;
 
 const TRACK_DEPTH: usize = 8;
 
