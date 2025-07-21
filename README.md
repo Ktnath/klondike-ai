@@ -41,6 +41,9 @@ python ai/train.py
 
 # Vérifier la configuration du système
 python check_system_ready.py
+
+# Analyser les performances après entraînement
+python train/analyze_training.py --logfile logs/training_log.csv --output_dir reports/
 ```
 
 ## 🤖 Fonctionnalités principales
@@ -52,6 +55,9 @@ python check_system_ready.py
 - ✅ Self-play à la AlphaZero (Coach + MCTS)
 - ✅ Génération de données expertes humaines
 - ✅ Visualisation, Optuna et replays
+- ✅ Imitation learning et collecte DAgger
+- ✅ Génération automatique de jeux optimaux (dataset expert)
+- ✅ Analyse post-entraînement des logs
 
 ## 📁 Structure du projet
 
