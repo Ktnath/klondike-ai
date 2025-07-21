@@ -121,6 +121,7 @@ dependencies = [
  "klondike_core",
  "numpy",
  "pyo3",
+ "rand",
  "serde",
  "serde_json",
  "torch",
@@ -143,6 +144,7 @@ version = "0.1.0"
 dependencies = [
  "arrayvec",
  "hashbrown",
+ "numpy",
  "pyo3",
  "rand",
  "rand_mt",
