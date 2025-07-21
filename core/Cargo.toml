@@ -18,7 +18,7 @@ serde_json.workspace = true
 
 [lib]
 name = "klondike_core"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [tool.maturin]
 module-name = "klondike_core"
