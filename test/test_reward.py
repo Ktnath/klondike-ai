@@ -8,3 +8,12 @@ def test_rust_reward_available():
     else:
         r = reward.compute_base_reward_json(s)
         assert abs(r - 3.0) < 1e-6
+
+
+def test_reward_missing_foundations():
+    s = '{"piles": []}'
+    if reward.compute_base_reward_json is None:
+        assert True
+    else:
+        r = reward.compute_base_reward_json(s)
+        assert abs(r - 0.0) < 1e-6

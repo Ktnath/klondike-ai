@@ -3,16 +3,20 @@
 // allocator and a panic handler. For simplicity and to allow integration with
 // PyO3 we rely on the standard library.
 
+pub mod analysis;
 pub mod card;
 pub mod convert;
 pub mod deck;
+pub mod dependencies;
 pub mod engine;
 pub mod formatter;
+pub mod game_theory;
 pub mod graph;
 pub mod hidden;
 pub mod hop_solver;
 pub mod mcts_solver;
 pub mod moves;
+pub mod partial;
 pub mod pruning;
 pub mod shuffler;
 pub mod solver;
@@ -21,22 +25,18 @@ pub mod standard;
 pub mod state;
 pub mod tracking;
 pub mod traverse;
-pub mod dependencies;
-pub mod partial;
-pub mod analysis;
-pub mod game_theory;
 mod utils;
 
-use pyo3::prelude::*;
-use pyo3::exceptions::PyValueError;
-use serde_json::Value;
-use rand::rngs::SmallRng;
-use rand::SeedableRng;
+use crate::engine::SolitaireEngine;
+use crate::moves::Move;
 use crate::shuffler::default_shuffle;
 use crate::state::Solitaire;
-use crate::moves::Move;
-use crate::engine::SolitaireEngine;
 use core::num::NonZeroU8;
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
+use serde_json::Value;
 
 fn encode_state(game: &Solitaire) -> String {
     format!("{}", game.encode())
@@ -77,9 +77,7 @@ fn move_to_string(m: Move) -> String {
 
 #[pyfunction]
 pub fn new_game(seed: Option<&str>) -> PyResult<String> {
-    let seed_val = seed
-        .and_then(|s| s.parse::<u64>().ok())
-        .unwrap_or(0);
+    let seed_val = seed.and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
     let cards = default_shuffle(seed_val);
     let game = Solitaire::new(&cards, NonZeroU8::new(1).unwrap());
     Ok(encode_state(&game))
@@ -87,7 +85,8 @@ pub fn new_game(seed: Option<&str>) -> PyResult<String> {
 
 #[pyfunction]
 pub fn legal_moves(state: &str) -> PyResult<Vec<String>> {
-    let st = decode_state(state).ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
+    let st = decode_state(state)
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
     let engine: SolitaireEngine<crate::pruning::FullPruner> = st.into();
     let moves = engine.list_moves();
     Ok(moves.iter().map(|&m| move_to_string(m)).collect())
@@ -95,7 +94,8 @@ pub fn legal_moves(state: &str) -> PyResult<Vec<String>> {
 
 #[pyfunction]
 pub fn play_move(state: &str, mv: &str) -> PyResult<(String, bool)> {
-    let mut st = decode_state(state).ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
+    let mut st = decode_state(state)
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
     let Some(m) = parse_move(mv) else {
         return Ok((encode_state(&st), false));
     };
@@ -113,7 +113,8 @@ pub fn encode_observation(_state: &str) -> PyResult<Vec<f32>> {
 
 #[pyfunction]
 pub fn foundation_count(state: &str) -> PyResult<usize> {
-    let st = decode_state(state).ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
+    let st = decode_state(state)
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
     let mut count = 0usize;
     for suit in 0..crate::card::N_SUITS {
         count += st.get_stack().get(suit) as usize;
@@ -123,7 +124,8 @@ pub fn foundation_count(state: &str) -> PyResult<usize> {
 
 #[pyfunction]
 pub fn is_won(state: &str) -> PyResult<bool> {
-    let st = decode_state(state).ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
+    let st = decode_state(state)
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
     Ok(st.is_win())
 }
 
@@ -132,10 +134,13 @@ pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
     let parsed: Value = serde_json::from_str(state)
         .map_err(|e| PyValueError::new_err(format!("Invalid JSON: {}", e)))?;
 
-    let foundations = parsed
-        .get("foundations")
-        .and_then(|f| f.as_array())
-        .ok_or_else(|| PyValueError::new_err("Missing 'foundations' field"))?;
+    let foundations = match parsed.get("foundations").and_then(|f| f.as_array()) {
+        Some(f) => f,
+        None => {
+            eprintln!("⚠️ compute_base_reward_json: missing 'foundations' field");
+            return Ok(0.0);
+        }
+    };
 
     let total_cards = foundations
         .iter()
