@@ -7,7 +7,7 @@ def test_rust_reward_available():
         assert True
     else:
         r = reward.compute_base_reward_json(s)
-        assert abs(r - 3.0) < 1e-6
+        assert abs(r - (3.0 / 52.0)) < 1e-6
 
 
 def test_reward_missing_foundations():
@@ -15,5 +15,6 @@ def test_reward_missing_foundations():
     if reward.compute_base_reward_json is None:
         assert True
     else:
-        r = reward.compute_base_reward_json(s)
-        assert abs(r - 0.0) < 1e-6
+        import pytest
+        with pytest.raises(Exception):
+            reward.compute_base_reward_json(s)

@@ -75,12 +75,88 @@ fn move_to_string(m: Move) -> String {
     }
 }
 
+fn card_to_string(card: crate::card::Card, lower: bool) -> String {
+    use crate::formatter::NUMBERS;
+    let (rank, suit) = card.split();
+    let s = match suit {
+        0 => 'H',
+        1 => 'D',
+        2 => 'C',
+        3 => 'S',
+        _ => 'x',
+    };
+    let suit_char = if lower { s.to_ascii_lowercase() } else { s };
+    format!("{}{}", NUMBERS[rank as usize], suit_char)
+}
+
+#[pyfunction]
+pub fn encode_state_to_json(encoded: &str) -> PyResult<String> {
+    let st = decode_state(encoded)
+        .ok_or_else(|| PyValueError::new_err("invalid state"))?;
+    let game: crate::standard::StandardSolitaire = (&st).into();
+
+    let tableau: Vec<Vec<String>> = (0..crate::deck::N_PILES)
+        .map(|i| {
+            let mut col = Vec::new();
+            for c in &game.get_hidden()[i as usize] {
+                col.push(card_to_string(*c, true));
+            }
+            for c in &game.get_piles()[i as usize] {
+                col.push(card_to_string(*c, false));
+            }
+            col
+        })
+        .collect();
+
+    let stock: Vec<String> = game
+        .get_deck()
+        .deck_iter()
+        .rev()
+        .map(|c| card_to_string(c, false))
+        .collect();
+
+    let waste: Vec<String> = game
+        .get_deck()
+        .waste_iter()
+        .map(|c| card_to_string(c, false))
+        .collect();
+
+    let foundations: Vec<Vec<String>> = (0..crate::card::N_SUITS)
+        .map(|s| {
+            (0..game.get_stack().get(s))
+                .map(|r| card_to_string(crate::card::Card::new(r, s), false))
+                .collect()
+        })
+        .collect();
+
+    let mut engine: SolitaireEngine<crate::pruning::FullPruner> = st.into();
+    let moves = engine
+        .list_moves()
+        .iter()
+        .map(|&m| move_to_string(m))
+        .collect::<Vec<_>>();
+
+    let json = serde_json::json!({
+        "tableau": tableau,
+        "foundations": foundations,
+        "stock": stock,
+        "waste": waste,
+        "score": 0,
+        "moves": moves,
+        "encoded": encoded
+    });
+
+    serde_json::to_string(&json).map_err(|e| PyValueError::new_err(e.to_string()))
+}
+
+
 #[pyfunction]
 pub fn new_game(seed: Option<&str>) -> PyResult<String> {
     let seed_val = seed.and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
     let cards = default_shuffle(seed_val);
     let game = Solitaire::new(&cards, NonZeroU8::new(1).unwrap());
-    Ok(encode_state(&game))
+    let encoded = encode_state(&game);
+    encode_state_to_json(&encoded)
 }
 
 #[pyfunction]
@@ -94,15 +170,24 @@ pub fn legal_moves(state: &str) -> PyResult<Vec<String>> {
 
 #[pyfunction]
 pub fn play_move(state: &str, mv: &str) -> PyResult<(String, bool)> {
-    let mut st = decode_state(state)
+    let v: Value = serde_json::from_str(state)
+        .map_err(|_| PyValueError::new_err("Invalid state"))?;
+    let encoded = v.get("encoded")
+        .and_then(|e| e.as_str())
+        .ok_or_else(|| PyValueError::new_err("Missing encoded field"))?;
+    let mut st = decode_state(encoded)
         .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
     let Some(m) = parse_move(mv) else {
-        return Ok((encode_state(&st), false));
+        let encoded = encode_state(&st);
+        let json = encode_state_to_json(&encoded)?;
+        return Ok((json, false));
     };
     let mut engine: SolitaireEngine<crate::pruning::FullPruner> = st.into();
     let valid = engine.do_move(m);
     st = engine.into_state();
-    Ok((encode_state(&st), valid))
+    let encoded = encode_state(&st);
+    let json = encode_state_to_json(&encoded)?;
+    Ok((json, valid))
 }
 
 #[pyfunction]
@@ -131,24 +216,21 @@ pub fn is_won(state: &str) -> PyResult<bool> {
 
 #[pyfunction]
 pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
-    let parsed: Value = serde_json::from_str(state)
-        .map_err(|e| PyValueError::new_err(format!("Invalid JSON: {}", e)))?;
+    let v: Value = serde_json::from_str(state)
+        .map_err(|_| PyValueError::new_err("Invalid JSON passed to reward engine"))?;
 
-    let foundations = match parsed.get("foundations").and_then(|f| f.as_array()) {
-        Some(f) => f,
-        None => {
-            eprintln!("⚠️ compute_base_reward_json: missing 'foundations' field");
-            return Ok(0.0);
-        }
-    };
+    if !v.get("foundations").is_some() {
+        return Err(PyValueError::new_err("Missing 'foundations' field"));
+    }
 
-    let total_cards = foundations
+    let count = v["foundations"]
+        .as_array()
+        .ok_or_else(|| PyValueError::new_err("'foundations' should be an array"))?
         .iter()
-        .filter_map(|pile| pile.as_array())
-        .map(|pile| pile.len())
+        .map(|stack| stack.as_array().map(|a| a.len()).unwrap_or(0))
         .sum::<usize>();
 
-    Ok(total_cards as f32)
+    Ok(count as f32 / 52.0)
 }
 
 #[pyfunction]
@@ -184,6 +266,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(move_from_index, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
     m.add_function(wrap_pyfunction!(shuffle_seed, m)?)?;
+    m.add_function(wrap_pyfunction!(encode_state_to_json, m)?)?;
     m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
     Ok(())
 }
