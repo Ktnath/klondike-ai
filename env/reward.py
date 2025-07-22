@@ -1,29 +1,31 @@
 """Reward function for Klondike DQN agent."""
 
 from typing import Any
-import json
 import logging
 
 from utils.config import load_config
 
 try:
-    from klondike_core import (
-        encode_observation,
-        foundation_count,
-        compute_base_reward_json,
+    from klondike_core import compute_base_reward_json
+except ImportError:  # pragma: no cover - extension missing
+    compute_base_reward_json = None
+    logging.warning(
+        "\u26a0\ufe0f compute_base_reward_json not available. Falling back to Python logic."
     )
+
+try:
+    from klondike_core import encode_observation, foundation_count
 except Exception:  # pragma: no cover - fallback if extension missing
     encode_observation = None
     foundation_count = None
-    compute_base_reward_json = None
 
 try:
     _CFG = load_config()
-    USE_RUST_REWARD = bool(getattr(_CFG.env, "use_rust_reward", True))
     USE_SHAPING = bool(getattr(_CFG, "reward_shaping", False))
 except Exception:  # pragma: no cover - config may be missing
-    USE_RUST_REWARD = True
     USE_SHAPING = False
+
+USE_RUST_REWARD = True
 
 
 def _count_face_up(state: Any) -> int:
@@ -85,16 +87,14 @@ def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> floa
     if done:
         return 10.0 if getattr(next_state, "is_won", lambda: False)() else -1.0
 
-    reward = 0.0
-
     if compute_base_reward_json is not None and USE_RUST_REWARD:
         try:
             reward = float(compute_base_reward_json(next_state))
         except Exception as exc:  # pragma: no cover - runtime error
-            logging.warning("Rust reward failed, falling back to Python: %s", exc)
-            reward = 0.0
-    elif compute_base_reward_json is None and USE_RUST_REWARD:
-        logging.info("klondike_core missing, using Python reward only")
+            logging.warning("Rust reward error: %s", exc)
+            reward = fallback_python_reward(next_state)
+    else:
+        reward = fallback_python_reward(next_state)
 
     flips = _count_face_up(next_state) - _count_face_up(state)
     found_diff = _foundation_count(next_state) - _foundation_count(state)
@@ -115,3 +115,8 @@ def compute_reward(state: Any, action: int, next_state: Any, done: bool) -> floa
             reward -= 0.01
 
     return float(reward)
+
+
+def fallback_python_reward(state: Any) -> float:
+    """Very basic fallback reward if Rust implementation isn't available."""
+    return -0.01
