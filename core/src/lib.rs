@@ -28,6 +28,8 @@ pub mod game_theory;
 mod utils;
 
 use pyo3::prelude::*;
+use pyo3::exceptions::PyValueError;
+use serde_json::Value;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use crate::shuffler::default_shuffle;
@@ -126,6 +128,25 @@ pub fn is_won(state: &str) -> PyResult<bool> {
 }
 
 #[pyfunction]
+pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
+    let parsed: Value = serde_json::from_str(state)
+        .map_err(|e| PyValueError::new_err(format!("Invalid JSON: {}", e)))?;
+
+    let foundations = parsed
+        .get("foundations")
+        .and_then(|f| f.as_array())
+        .ok_or_else(|| PyValueError::new_err("Missing 'foundations' field"))?;
+
+    let total_cards = foundations
+        .iter()
+        .filter_map(|pile| pile.as_array())
+        .map(|pile| pile.len())
+        .sum::<usize>();
+
+    Ok(total_cards as f32)
+}
+
+#[pyfunction]
 pub fn move_index(_mv: &str) -> PyResult<usize> {
     // Simplistic constant mapping used for testing
     Ok(0)
@@ -158,5 +179,6 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(move_from_index, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
     m.add_function(wrap_pyfunction!(shuffle_seed, m)?)?;
+    m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
     Ok(())
 }
