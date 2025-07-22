@@ -7,6 +7,7 @@ mod training;
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use klondike_core::convert::convert_moves;
+use klondike_core;
 // use klondike_core::dependencies::DependencyEngine;
 use klondike_core::engine::SolitaireEngine;
 use klondike_core::mcts_solver::pick_moves;
@@ -538,6 +539,11 @@ enum Commands {
         #[arg(default_value_t = 1000)]
         n_games: usize,
     },
+    Reward {
+        /// Chemin vers un fichier JSON représentant un état de jeu
+        #[arg(short, long)]
+        file: String,
+    },
 }
 
 fn main() {
@@ -604,6 +610,18 @@ fn main() {
         Commands::Collect { n_games } => {
             if let Err(e) = training::collect_training_data(*n_games) {
                 eprintln!("{e}");
+            }
+        }
+        Commands::Reward { file } => {
+            use std::fs;
+            use klondike_core::compute_base_reward_json;
+
+            let json = fs::read_to_string(file)
+                .expect("Impossible de lire le fichier JSON");
+
+            match compute_base_reward_json(&json) {
+                Ok(score) => println!("✅ Reward Rust : {}", score),
+                Err(e) => eprintln!("❌ Erreur compute_base_reward_json: {}", e),
             }
         }
     }
