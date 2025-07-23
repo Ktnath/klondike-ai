@@ -33,5 +33,5 @@ imitation_learning: true
 dagger: true
 reward_shaping: true
 critical_weighting: true
-expert_dataset: "data/expert_dataset.jsonl"
+expert_dataset: "data/expert_dataset.npz"
 dagger_dataset: "data/dagger_buffer.jsonl"

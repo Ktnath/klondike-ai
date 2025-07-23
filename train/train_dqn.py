@@ -4,19 +4,21 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
+import logging
 import os
 import random
-import csv
-import logging
-from typing import Tuple, List
+from ast import literal_eval
 from glob import glob
+from typing import List, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import json
+
 
 try:
     from klondike_core import solve_klondike, move_index
@@ -33,6 +35,7 @@ from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
 from utils.config import load_config
 from dagger_dataset import DaggerDataset
+from train.plot_results import plot_metrics
 
 
 class DQN(nn.Module):
@@ -136,6 +139,113 @@ class ReplayBuffer:
         return len(self.buffer)
 
 
+def _load_npz(path: str, use_intentions: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Load data from a NPZ expert file."""
+    data = np.load(path, allow_pickle=True)
+    obs = data["observations"].astype(np.float32)
+    actions = data["actions"].astype(np.int64)
+    if use_intentions and "intentions" in data:
+        raw = data["intentions"]
+        if raw.dtype.kind in {"U", "S", "O"}:
+            uniq = sorted(set(raw.tolist()))
+            mapping = {val: i for i, val in enumerate(uniq)}
+            idxs = np.array([mapping[x] for x in raw.tolist()], dtype=np.int64)
+        else:
+            idxs = raw.astype(np.int64)
+        one_hot = np.eye(int(idxs.max()) + 1)[idxs]
+        obs = np.concatenate([obs, one_hot], axis=1)
+    X = torch.tensor(obs, dtype=torch.float32)
+    y = torch.tensor(actions, dtype=torch.long)
+    return X, y
+
+
+def _load_csv_dir(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Load observations/actions from a directory of CSV episode logs."""
+    obs_list: List[List[float]] = []
+    act_list: List[int] = []
+    for file in sorted(glob(os.path.join(path, "*.csv"))):
+        with open(file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(line for line in f if not line.startswith("#"))
+            for row in reader:
+                obs = literal_eval(row["observation"])
+                act = int(row["action"])
+                obs_list.append(obs)
+                act_list.append(act)
+    if not obs_list:
+        raise FileNotFoundError(f"No CSV files found in {path}")
+    X = torch.tensor(obs_list, dtype=torch.float32)
+    y = torch.tensor(act_list, dtype=torch.long)
+    return X, y
+
+
+def load_dataset(path: str, use_intentions: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Load dataset from NPZ file or CSV directory."""
+    if os.path.isfile(path) and path.endswith(".npz"):
+        return _load_npz(path, use_intentions)
+    return _load_csv_dir(path)
+
+
+def train_supervised(
+    dataset_path: str,
+    use_intentions: bool,
+    epochs: int,
+    model_path: str,
+    log_path: str,
+) -> None:
+    """Train the DQN model in a supervised manner from a dataset."""
+    X, y = load_dataset(dataset_path, use_intentions)
+    dataset = torch.utils.data.TensorDataset(X, y)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+
+    input_dim = X.shape[1]
+    num_actions = int(y.max().item()) + 1
+    model = DQN(input_dim, num_actions)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    criterion = nn.CrossEntropyLoss()
+
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    log_file = open(log_path, "w", newline="", encoding="utf-8")
+    logger = csv.writer(log_file)
+    logger.writerow(["epoch", "loss", "accuracy"])
+
+    for epoch in range(1, epochs + 1):
+        total_loss = 0.0
+        correct = 0
+        total = 0
+        for bx, by in loader:
+            optimizer.zero_grad()
+            logits = model(bx)
+            loss = criterion(logits, by)
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item() * bx.size(0)
+            preds = logits.argmax(1)
+            correct += (preds == by).sum().item()
+            total += bx.size(0)
+
+        avg_loss = total_loss / total
+        acc = correct / total if total else 0.0
+        logging.info("Epoch %d - Loss %.4f - Acc %.3f", epoch, avg_loss, acc)
+        logger.writerow([epoch, avg_loss, acc])
+
+    log_file.close()
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    torch.save(model.state_dict(), model_path)
+    logging.info("Model saved to %s", model_path)
+
+    # Plot training curves
+    try:
+        import pandas as pd
+
+        df = pd.read_csv(log_path)
+        plot_path = os.path.join(os.path.dirname(model_path), "training_plot.png")
+        plot_metrics(df, plot_path)
+        logging.info("Plot saved to %s", plot_path)
+    except Exception as exc:  # pragma: no cover - plotting failures shouldn't stop training
+        logging.warning("Could not generate plot: %s", exc)
+
+
 def train(config) -> None:
     """Train a DQN agent using parameters from the config."""
     episodes = config.training.episodes
@@ -156,7 +266,7 @@ def train(config) -> None:
     optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
 
     # Configuration options that may be absent from config.yaml
-    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.jsonl")
+    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.npz")
     dagger_dataset_path = getattr(config, "dagger_dataset", "data/dagger_buffer.jsonl")
     use_imitation = bool(getattr(config, "imitation_learning", False))
     use_dagger = bool(getattr(config, "dagger", False))
@@ -164,22 +274,32 @@ def train(config) -> None:
 
     if use_imitation and os.path.exists(expert_dataset_path):
         logging.info("Pretraining from expert dataset %s", expert_dataset_path)
-        obs_list: List[List[float]] = []
-        act_list: List[int] = []
-        w_list: List[float] = []
-        with open(expert_dataset_path, "r", encoding="utf-8") as f:
-            for line in f:
-                d = json.loads(line)
-                obs_list.append(d["observation"])
-                act_list.append(d["action"])
-                w_list.append(2.0 if d.get("is_critical") else 1.0)
-        if obs_list:
-            dataset = torch.utils.data.TensorDataset(
-                torch.tensor(obs_list, dtype=torch.float32),
-                torch.tensor(act_list, dtype=torch.long),
-                torch.tensor(w_list, dtype=torch.float32),
-            )
+        if expert_dataset_path.endswith(".jsonl"):
+            obs_list: List[List[float]] = []
+            act_list: List[int] = []
+            w_list: List[float] = []
+            with open(expert_dataset_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    d = json.loads(line)
+                    obs_list.append(d["observation"])
+                    act_list.append(d["action"])
+                    w_list.append(2.0 if d.get("is_critical") else 1.0)
+            if not obs_list:
+                loader = None
+            else:
+                dataset = torch.utils.data.TensorDataset(
+                    torch.tensor(obs_list, dtype=torch.float32),
+                    torch.tensor(act_list, dtype=torch.long),
+                    torch.tensor(w_list, dtype=torch.float32),
+                )
+                loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+        else:
+            X, y = load_dataset(expert_dataset_path, False)
+            w = torch.ones(len(y))
+            dataset = torch.utils.data.TensorDataset(X, y, w)
             loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+
+        if loader is not None:
             for _ in range(3):
                 for bx, by, bw in loader:
                     bx, by, bw = bx.to(device), by.to(device), bw.to(device)
@@ -448,13 +568,14 @@ if __name__ == "__main__":
     )
 
     config = load_config()
-    parser = argparse.ArgumentParser(description="Train DQN on Klondike")
-    parser.add_argument(
-        "--episodes",
-        type=int,
-        default=config.training.episodes,
-        help="Number of training episodes",
-    )
+    parser = argparse.ArgumentParser(description="Train DQN")
+    parser.add_argument("--dataset", type=str, help="Path to NPZ or CSV dataset")
+    parser.add_argument("--use_intentions", action="store_true", help="Use intention labels if available")
+    parser.add_argument("--epochs", type=int, default=20, help="Epochs for supervised training")
+    parser.add_argument("--model_path", type=str, default="results/dqn_supervised.pth", help="Output model path")
+    parser.add_argument("--log_path", type=str, default="results/train_log.csv", help="CSV log path")
+
+    parser.add_argument("--episodes", type=int, default=config.training.episodes, help="Number of RL episodes")
     parser.add_argument(
         "--log",
         "--log-level",
@@ -465,5 +586,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     logging.getLogger().setLevel(getattr(logging, args.log_level))
-    config.training.episodes = args.episodes
-    train(config)
+
+    if args.dataset:
+        train_supervised(args.dataset, args.use_intentions, args.epochs, args.model_path, args.log_path)
+    else:
+        config.training.episodes = args.episodes
+        train(config)
