@@ -1,9 +1,10 @@
 use serde_json::Value;
-use klondike_core::solve_klondike;
+use klondike_core::{solve_klondike, new_game};
 
 #[test]
 fn test_solver_returns_json() {
-    let out = solve_klondike("42").unwrap();
+    let state = new_game(None).unwrap();
+    let out = solve_klondike(&state).unwrap();
     let v: Value = serde_json::from_str(&out).unwrap();
     assert!(v.get("result").is_some());
 }

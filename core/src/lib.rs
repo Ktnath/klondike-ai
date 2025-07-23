@@ -31,6 +31,9 @@ use crate::engine::SolitaireEngine;
 use crate::moves::Move;
 use crate::shuffler::default_shuffle;
 use crate::state::Solitaire;
+use crate::legacy::solver::{solve_with_tracking, SearchResult};
+use crate::pruning::FullPruner;
+use crate::tracking::{EmptySearchStats, DefaultTerminateSignal};
 use core::num::NonZeroU8;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -245,8 +248,32 @@ pub fn move_from_index(_idx: usize) -> PyResult<Option<String>> {
 }
 
 #[pyfunction]
-pub fn solve_klondike(_seed: &str) -> PyResult<String> {
-    Ok("{\"result\":null}".to_string())
+pub fn solve_klondike(state_json: &str) -> PyResult<String> {
+    let res: Option<Vec<String>> = (|| {
+        let v: Value = serde_json::from_str(state_json).ok()?;
+        let encoded = v.get("encoded")?.as_str()?;
+        let mut state = decode_state(encoded)?;
+
+        let (status, history) = solve_with_tracking(
+            &mut state,
+            &EmptySearchStats {},
+            &DefaultTerminateSignal {},
+        );
+
+        if status == SearchResult::Solved {
+            let moves = history?;
+            Some(moves.iter().copied().map(move_to_string).collect())
+        } else {
+            None
+        }
+    })();
+
+    let json = match res {
+        Some(moves) => serde_json::json!({ "result": moves }),
+        None => serde_json::json!({ "result": null }),
+    };
+
+    serde_json::to_string(&json).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 #[pyfunction]
