@@ -618,8 +618,11 @@ pub mod solver {
         Crashed,
     }
 
+    use crate::intentions::{infer_intention, LabeledMove};
+
     struct SolverCallback<'a, S: SearchStatistics, T: TerminateSignal> {
         history: HistoryVec,
+        annotated_moves: Vec<LabeledMove>,
         stats: &'a S,
         sign: &'a T,
         result: SearchResult,
@@ -647,7 +650,12 @@ pub mod solver {
             Control::Ok
         }
 
-        fn on_do_move(&mut self, _: &Solitaire, m: Move, _: Encode, _: &FullPruner) -> Control {
+        fn on_do_move(&mut self, g: &Solitaire, m: Move, _: Encode, _: &FullPruner) -> Control {
+            let before = g.clone();
+            let mut after = before.clone();
+            after.do_move(m);
+            let intention = infer_intention(&before, &m, &after);
+            self.annotated_moves.push(LabeledMove { mv: m, intention });
             self.history.push(m);
             Control::Ok
         }
@@ -664,11 +672,12 @@ pub mod solver {
         game: &mut Solitaire,
         stats: &S,
         sign: &T,
-    ) -> (SearchResult, Option<HistoryVec>) {
+    ) -> (SearchResult, Option<(HistoryVec, Vec<LabeledMove>)>) {
         let mut tp = TpTable::default();
 
         let mut callback = SolverCallback {
             history: HistoryVec::new(),
+            annotated_moves: Vec::new(),
             stats,
             sign,
             result: SearchResult::Unsolvable,
@@ -679,13 +688,13 @@ pub mod solver {
         let result = callback.result;
 
         if result == SearchResult::Solved {
-            (result, Some(callback.history))
+            (result, Some((callback.history, callback.annotated_moves)))
         } else {
             (result, None)
         }
     }
 
-    pub fn solve(game: &mut Solitaire) -> (SearchResult, Option<HistoryVec>) {
+    pub fn solve(game: &mut Solitaire) -> (SearchResult, Option<(HistoryVec, Vec<LabeledMove>)>) {
         solve_with_tracking(game, &EmptySearchStats {}, &DefaultTerminateSignal {})
     }
 }

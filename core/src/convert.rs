@@ -126,7 +126,7 @@ mod tests {
             res1
         };
 
-        let Some(moves) = res.1 else {
+        let Some((moves, _)) = res.1 else {
             return;
         };
 
