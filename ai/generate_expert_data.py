@@ -1,3 +1,4 @@
+"""Interactive script to record expert games using the Python bindings."""
 import json
 import logging
 import os
@@ -5,41 +6,45 @@ from typing import List
 
 import numpy as np
 from tqdm import tqdm
-from klondike_core import Engine, Move
+from klondike_core import (
+    new_game,
+    legal_moves,
+    play_move,
+    move_index,
+    encode_observation,
+    shuffle_seed,
+)
 
 
 def record_game() -> List[dict]:
     """Enregistre une partie jouée par un humain."""
-    engine = Engine()
+    state = new_game(str(shuffle_seed()))
     moves: List[dict] = []
 
     logging.info("\nEnregistrement d'une nouvelle partie...")
     logging.info("Pour chaque coup, entrez le numéro correspondant ou 'stop' pour terminer.")
 
-    while not engine.get_state().is_won():
-        display_game_state(engine)
-        available_moves = engine.get_available_moves()
-
+    while not json.loads(state).get("is_won", False):
+        available_moves = json.loads(state).get("moves", [])
         logging.info("\nCoups disponibles:")
-        for i, move in enumerate(available_moves):
-            logging.info("%d: %s", i, move)
+        for i, mv in enumerate(available_moves):
+            logging.info("%d: %s", i, mv)
 
         choice = input("\nVotre choix (ou 'stop' pour terminer): ")
         if choice.lower() == "stop":
             break
 
         try:
-            move_index = int(choice)
-            if 0 <= move_index < len(available_moves):
-                selected_move = available_moves[move_index]
-                engine.make_move(selected_move)
-
-                state = engine.get_state().encode_observation()
+            mv_idx = int(choice)
+            if 0 <= mv_idx < len(available_moves):
+                mv = available_moves[mv_idx]
+                state, _ = play_move(state, mv)
+                obs = encode_observation(state)
                 moves.append(
                     {
-                        "state": state.tolist(),
-                        "move": selected_move.get_move_index(),
-                        "result": 1.0 if engine.get_state().is_won() else 0.0,
+                        "state": obs,
+                        "move": move_index(mv),
+                        "result": 1.0 if json.loads(state).get("is_won", False) else 0.0,
                     }
                 )
             else:
@@ -48,12 +53,6 @@ def record_game() -> List[dict]:
             logging.info("Entrée invalide !")
 
     return moves
-
-
-def display_game_state(engine: Engine) -> None:
-    """Affiche l'état actuel du jeu."""
-    logging.info("\n=== État du jeu ===")
-    logging.info("Score: %s", engine.get_state().get_score())
 
 
 def save_games(games: List[List[dict]], filename: str = "expert_games.jsonl") -> None:

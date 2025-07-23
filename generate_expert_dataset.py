@@ -6,62 +6,45 @@ from typing import Dict, List
 from tqdm import trange
 import numpy as np
 
-from env.klondike_env import KlondikeEnv
-from env.reward import compute_reward
-from env.state_utils import (
-    get_hidden_cards,
-    count_empty_columns,
-    extract_foundations,
+from klondike_core import (
+    new_game,
+    legal_moves,
+    play_move,
+    move_index,
+    compute_base_reward_json,
+    solve_klondike,
+    shuffle_seed,
 )
-
-
-
-try:
-    from klondike_core import solve_klondike, move_index, shuffle_seed
-except Exception:  # pragma: no cover - fallback when extension missing
-    from klondike_core import solve_klondike, move_index
-    shuffle_seed = None
 
 
 def generate_games(num_games: int, output: str) -> None:
     """Generate expert dataset using the optimal solver."""
     os.makedirs(os.path.dirname(output), exist_ok=True)
     transitions: List[Dict] = []
+
     for _ in trange(num_games, desc="games"):
         seed = str(shuffle_seed()) if shuffle_seed else str(random.randint(0, 2**32 - 1))
-        solution = json.loads(solve_klondike(seed))
-        moves: List[str] = solution.get("moves", [])
-        env = KlondikeEnv(seed=seed)
-        env.reset(seed)
-        prev_state = env.state
+        state = new_game(seed)
+        solution = json.loads(solve_klondike(state))
+        moves: List[str] = solution.get("result", [])
+        prev_state = state
         for mv_json in moves:
             action = move_index(mv_json)
-            _, rew, done, _ = env.step(action)
+            next_state, _ = play_move(prev_state, mv_json)
+            reward = compute_base_reward_json(next_state)
 
-            prev_state_dict = json.loads(prev_state)
-            next_state_dict = json.loads(env.state)
-
-            tags = {
-                "reveals_hidden_card": len(get_hidden_cards(next_state_dict)) < len(get_hidden_cards(prev_state_dict)),
-                "frees_column": count_empty_columns(next_state_dict) > count_empty_columns(prev_state_dict),
-                "foundation_progress": sum(extract_foundations(next_state_dict).values()) > sum(extract_foundations(prev_state_dict).values()),
-                "is_critical": compute_reward(prev_state, action, env.state, done) > 0,
-            }
-
+            done = json.loads(next_state).get("is_won", False)
             transitions.append(
                 {
-                    "state": prev_state_dict,
-                    "action": {
-                        "index": int(action),
-                        "semantic_tags": tags,
-                    },
-                    "next_state": next_state_dict,
-                    "reward": float(rew),
+                    "state": json.loads(prev_state),
+                    "action": int(action),
+                    "next_state": json.loads(next_state),
+                    "reward": float(reward),
                     "done": bool(done),
                 }
             )
 
-            prev_state = env.state
+            prev_state = next_state
             if done:
                 break
 
