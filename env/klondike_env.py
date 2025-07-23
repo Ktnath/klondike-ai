@@ -69,11 +69,21 @@ class KlondikeEnv(gym.Env):
             self.state = new_game()
         return self._encode_state()
 
+    def _encoded(self, state: str) -> str:
+        """Extract the encoded state string from the JSON representation."""
+        try:
+            import json
+
+            return json.loads(state)["encoded"]
+        except Exception:
+            return state
+
     def get_valid_actions(self) -> List[int]:
         """Return currently valid action indices."""
         if self.state is None:
             return []
-        moves = legal_moves(self.state)
+        encoded = self._encoded(self.state)
+        moves = legal_moves(encoded)
         return [move_index(m) for m in moves]
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
@@ -87,7 +97,8 @@ class KlondikeEnv(gym.Env):
             self.state, valid = play_move(self.state, move_json)
         next_state = self.state
 
-        done = bool(is_won(next_state)) or len(legal_moves(next_state)) == 0
+        encoded = self._encoded(next_state)
+        done = bool(is_won(encoded)) or len(legal_moves(encoded)) == 0
         reward = compute_reward(prev_state, action, next_state, done)
 
         obs = self._encode_state()
