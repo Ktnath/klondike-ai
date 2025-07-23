@@ -267,3 +267,60 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::Value;
+
+    #[test]
+    fn test_new_game_returns_json() {
+        let state_json = new_game(None).unwrap();
+        let v: Value = serde_json::from_str(&state_json).unwrap();
+        assert!(v.get("encoded").is_some());
+        assert!(v.get("moves").is_some());
+    }
+
+    #[test]
+    fn test_legal_moves_matches_moves_field() {
+        let state_json = new_game(None).unwrap();
+        let v: Value = serde_json::from_str(&state_json).unwrap();
+        let encoded = v["encoded"].as_str().unwrap();
+        let moves_field: Vec<String> = v["moves"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|m| m.as_str().unwrap().to_string())
+            .collect();
+        let legal = legal_moves(encoded).unwrap();
+        assert_eq!(legal, moves_field);
+    }
+
+    #[test]
+    fn test_play_move_valid() {
+        let state_json = new_game(None).unwrap();
+        let v: Value = serde_json::from_str(&state_json).unwrap();
+        let mv = v["moves"].as_array().unwrap()[0].as_str().unwrap();
+        let (next_state, valid) = play_move(&state_json, mv).unwrap();
+        assert!(valid);
+        let v_next: Value = serde_json::from_str(&next_state).unwrap();
+        assert!(v_next.get("encoded").is_some());
+    }
+
+    #[test]
+    fn test_compute_base_reward_json() {
+        let json = "{\"foundations\": [[\"AH\", \"2H\"], [], [], []]}";
+        let r = compute_base_reward_json(json).unwrap();
+        assert!((r - 2.0 / 52.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_encode_state_to_json_roundtrip() {
+        let state_json = new_game(None).unwrap();
+        let v: Value = serde_json::from_str(&state_json).unwrap();
+        let encoded = v["encoded"].as_str().unwrap();
+        let out = encode_state_to_json(encoded).unwrap();
+        let v_out: Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(v_out["encoded"].as_str().unwrap(), encoded);
+    }
+}
