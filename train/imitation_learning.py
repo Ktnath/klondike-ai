@@ -9,6 +9,8 @@ import logging
 from ast import literal_eval
 from typing import List, Tuple, Optional
 
+from intention_utils import group_into_hierarchy
+
 import numpy as np
 
 import torch
@@ -47,7 +49,7 @@ def load_csv_file(path: str) -> Tuple[List[torch.Tensor], List[int]]:
     return observations, actions
 
 
-def load_npz_file(path: str, use_intentions: bool) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+def load_npz_file(path: str, use_intentions: bool, use_hierarchy: bool = False) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
     """Load a NPZ dataset with optional intention labels."""
     data = np.load(path, allow_pickle=True)
     obs = torch.tensor(data["observations"], dtype=torch.float32)
@@ -58,6 +60,8 @@ def load_npz_file(path: str, use_intentions: bool) -> Tuple[torch.Tensor, torch.
         raw = data["intentions"]
         if raw.dtype.kind in {"U", "S", "O"}:
             lst = raw.tolist()
+            if use_hierarchy:
+                lst = group_into_hierarchy(lst)
             uniq = sorted(set(lst))
             mapping = {val: idx for idx, val in enumerate(uniq)}
             idxs = torch.tensor([mapping[x] for x in lst], dtype=torch.long)
@@ -72,10 +76,12 @@ def load_npz_file(path: str, use_intentions: bool) -> Tuple[torch.Tensor, torch.
     return obs, actions, intentions
 
 
-def load_data(source: str, use_intentions: bool = False) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
+def load_data(
+    source: str, use_intentions: bool = False, use_hierarchy: bool = False
+) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
     """Load dataset from CSV directory or NPZ file."""
     if os.path.isfile(source) and source.endswith(".npz"):
-        return load_npz_file(source, use_intentions)
+        return load_npz_file(source, use_intentions, use_hierarchy)
 
     all_obs: List[torch.Tensor] = []
     all_actions: List[int] = []
@@ -238,6 +244,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, help="Dataset for fine-tuning (.npz or CSV dir)")
     parser.add_argument("--test", type=str, help="Optional test dataset (.csv or .npz)")
     parser.add_argument("--use_intentions", action="store_true", help="Use intention labels if available")
+    parser.add_argument(
+        "--use_intention_hierarchy",
+        action="store_true",
+        help="Group intentions into higher-level categories",
+    )
     parser.add_argument("--fine_tune", action="store_true", help="Enable dataset fine-tuning mode")
     parser.add_argument("--reinforce", action="store_true", help="Enable reinforcement fine-tuning")
     parser.add_argument("--hybrid", action="store_true", help="Combine imitation and RL")
@@ -247,7 +258,9 @@ if __name__ == "__main__":
     if args.fine_tune:
         if not args.dataset:
             parser.error("--dataset is required for --fine_tune")
-        X, y, intents = load_data(args.dataset, args.use_intentions)
+        X, y, intents = load_data(
+            args.dataset, args.use_intentions, args.use_intention_hierarchy
+        )
         dataset = TensorDataset(X, y)
         input_dim = X.shape[1]
         num_actions = int(y.max().item()) + 1
@@ -273,13 +286,17 @@ if __name__ == "__main__":
         torch.save(model.state_dict(), args.output_path)
         logging.info("Model saved to %s", args.output_path)
     else:
-        X, y, intents = load_data(args.episodes_dir, args.use_intentions)
+        X, y, intents = load_data(
+            args.episodes_dir, args.use_intentions, args.use_intention_hierarchy
+        )
         dataset = TensorDataset(X, y)
         train(dataset, args.epochs, args.output_path, intents)
 
         if args.test:
             if args.test.endswith(".npz"):
-                X_test, y_test, _ = load_data(args.test, args.use_intentions)
+                X_test, y_test, _ = load_data(
+                    args.test, args.use_intentions, args.use_intention_hierarchy
+                )
                 test_dataset = TensorDataset(X_test, y_test)
             else:
                 test_obs, test_actions = load_csv_file(args.test)

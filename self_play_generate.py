@@ -3,6 +3,8 @@ import json
 import os
 from typing import Dict, List
 
+from intention_utils import simplify_intention, filter_ambiguous
+
 import numpy as np
 from tqdm import trange
 
@@ -136,11 +138,19 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
             actions.append(int(action))
             rewards.append(float(reward))
             dones.append(bool(done))
-            intentions.append(str(intention))
+            intentions.append(simplify_intention(str(intention)))
 
             state = next_state
             if done:
                 break
+
+    filtered = filter_ambiguous(intentions)
+    mask = [i is not None for i in filtered]
+    observations = [o for o, m in zip(observations, mask) if m]
+    actions = [a for a, m in zip(actions, mask) if m]
+    rewards = [r for r, m in zip(rewards, mask) if m]
+    dones = [d for d, m in zip(dones, mask) if m]
+    intentions = [i for i in filtered if i is not None]
 
     np.savez_compressed(
         output,
