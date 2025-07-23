@@ -1,13 +1,13 @@
 mod solver;
 mod solvitaire;
 mod tracking;
-mod tui;
 mod training;
+mod tui;
 
 use bpci::{Interval, NSuccessesSample, WilsonScore};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use klondike_core::convert::convert_moves;
 use klondike_core;
+use klondike_core::convert::convert_moves;
 // use klondike_core::dependencies::DependencyEngine;
 use klondike_core::engine::SolitaireEngine;
 use klondike_core::mcts_solver::pick_moves;
@@ -242,7 +242,7 @@ fn test_solve(seed: &Seed, draw_step: NonZeroU8, terminated: &Arc<AtomicBool>) {
     println!("Statistic\n{}", res.1);
     match res.0 {
         SearchResult::Solved => {
-            let m = res.2.unwrap();
+            let (m, _labels) = res.2.unwrap();
             println!("Solvable in {} moves", m.len());
             println!();
             let moves = convert_moves(&mut g_standard, &m[..]).unwrap();
@@ -307,7 +307,7 @@ fn rand_solve(seed: &Seed, draw_step: NonZeroU8, start_seed: u64, terminated: &A
     println!("Statistic\n{}", res.1);
     match res.0 {
         SearchResult::Solved => {
-            let m = res.2.unwrap();
+            let (m, _labels) = res.2.unwrap();
             println!("Solvable in {} moves", m.len());
             for x in m {
                 print!("{x}, ");
@@ -613,11 +613,10 @@ fn main() {
             }
         }
         Commands::Reward { file } => {
-            use std::fs;
             use klondike_core::compute_base_reward_json;
+            use std::fs;
 
-            let json = fs::read_to_string(file)
-                .expect("Impossible de lire le fichier JSON");
+            let json = fs::read_to_string(file).expect("Impossible de lire le fichier JSON");
 
             match compute_base_reward_json(&json) {
                 Ok(score) => println!("✅ Reward Rust : {}", score),

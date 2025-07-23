@@ -12,9 +12,10 @@ pub mod formatter;
 pub mod game_theory;
 pub mod hidden;
 pub mod legacy; // LEGACY modules
-// Re-export legacy solver and graph modules for backward compatibility
-pub use crate::legacy::solver;
+                // Re-export legacy solver and graph modules for backward compatibility
 pub use crate::legacy::graph;
+pub use crate::legacy::solver;
+pub mod intentions;
 pub mod mcts_solver;
 pub mod moves;
 pub mod partial;
@@ -28,12 +29,12 @@ pub mod traverse;
 mod utils;
 
 use crate::engine::SolitaireEngine;
+use crate::legacy::solver::{solve_with_tracking, SearchResult};
 use crate::moves::Move;
+use crate::pruning::FullPruner;
 use crate::shuffler::default_shuffle;
 use crate::state::Solitaire;
-use crate::legacy::solver::{solve_with_tracking, SearchResult};
-use crate::pruning::FullPruner;
-use crate::tracking::{EmptySearchStats, DefaultTerminateSignal};
+use crate::tracking::{DefaultTerminateSignal, EmptySearchStats};
 use core::num::NonZeroU8;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -94,8 +95,7 @@ fn card_to_string(card: crate::card::Card, lower: bool) -> String {
 
 #[pyfunction]
 pub fn encode_state_to_json(encoded: &str) -> PyResult<String> {
-    let st = decode_state(encoded)
-        .ok_or_else(|| PyValueError::new_err("invalid state"))?;
+    let st = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
     let game: crate::standard::StandardSolitaire = (&st).into();
 
     let tableau: Vec<Vec<String>> = (0..crate::deck::N_PILES)
@@ -152,7 +152,6 @@ pub fn encode_state_to_json(encoded: &str) -> PyResult<String> {
     serde_json::to_string(&json).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
-
 #[pyfunction]
 pub fn new_game(seed: Option<&str>) -> PyResult<String> {
     let seed_val = seed.and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
@@ -173,9 +172,10 @@ pub fn legal_moves(state: &str) -> PyResult<Vec<String>> {
 
 #[pyfunction]
 pub fn play_move(state: &str, mv: &str) -> PyResult<(String, bool)> {
-    let v: Value = serde_json::from_str(state)
-        .map_err(|_| PyValueError::new_err("Invalid state"))?;
-    let encoded = v.get("encoded")
+    let v: Value =
+        serde_json::from_str(state).map_err(|_| PyValueError::new_err("Invalid state"))?;
+    let encoded = v
+        .get("encoded")
         .and_then(|e| e.as_str())
         .ok_or_else(|| PyValueError::new_err("Missing encoded field"))?;
     let mut st = decode_state(encoded)
@@ -254,14 +254,11 @@ pub fn solve_klondike(state_json: &str) -> PyResult<String> {
         let encoded = v.get("encoded")?.as_str()?;
         let mut state = decode_state(encoded)?;
 
-        let (status, history) = solve_with_tracking(
-            &mut state,
-            &EmptySearchStats {},
-            &DefaultTerminateSignal {},
-        );
+        let (status, history) =
+            solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
 
         if status == SearchResult::Solved {
-            let moves = history?;
+            let (moves, _) = history?;
             Some(moves.iter().copied().map(move_to_string).collect())
         } else {
             None

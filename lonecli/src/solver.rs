@@ -1,6 +1,7 @@
 use core::time::Duration;
 use klondike_core::{
     graph::{graph_with_tracking, Graph},
+    intentions::LabeledMove,
     solver::{solve_with_tracking, HistoryVec, SearchResult},
     state::Solitaire,
     tracking::TerminateSignal,
@@ -37,7 +38,11 @@ pub(crate) fn run_solve(
     mut g: Solitaire,
     verbose: bool,
     term_signal: &Arc<AtomicBool>,
-) -> (SearchResult, AtomicSearchStats, Option<HistoryVec>) {
+) -> (
+    SearchResult,
+    AtomicSearchStats,
+    Option<(HistoryVec, Vec<klondike_core::intentions::LabeledMove>)>,
+) {
     let ss = Arc::new(AtomicSearchStats::new());
 
     let (send, recv) = channel::<()>();
