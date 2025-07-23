@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "klondike-ai"
 version = "0.1.0"
-authors = ["Klondike AI Team"]
+authors = [{name = "Klondike AI Team"}]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.8"
