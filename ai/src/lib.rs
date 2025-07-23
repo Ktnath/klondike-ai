@@ -1,40 +1,101 @@
-mod network;
-mod mcts;
 mod coach;
+mod mcts;
+mod network;
 
+use klondike_core::{
+    encode_observation, foundation_count, is_won, legal_moves, move_from_index, move_index,
+    new_game, play_move,
+};
 use pyo3::prelude::*;
-use serde_json;
-/// Placeholder types used for compiling the examples.
+use serde_json::{self, Value};
+
+/// Representation of the game state as JSON string used by `klondike_core`.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct GameState {}
+pub struct GameState {
+    pub json: String,
+}
 
 impl GameState {
-    pub fn encode_observation(&self) -> Vec<f32> { Vec::new() }
-    pub fn is_won(&self) -> bool { false }
-    pub fn get_score(&self) -> i32 { 0 }
+    fn encoded(&self) -> String {
+        serde_json::from_str::<Value>(&self.json)
+            .ok()
+            .and_then(|v| {
+                v.get("encoded")
+                    .and_then(|e| e.as_str())
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_else(|| self.json.clone())
+    }
+
+    pub fn encode_observation(&self) -> Vec<f32> {
+        encode_observation(&self.json).unwrap_or_default()
+    }
+
+    pub fn is_won(&self) -> bool {
+        is_won(&self.encoded()).unwrap_or(false)
+    }
+
+    pub fn get_score(&self) -> i32 {
+        foundation_count(&self.encoded()).unwrap_or(0) as i32
+    }
 }
 
 #[derive(Debug, Clone)]
-pub struct Engine {}
+pub struct Engine {
+    state: String,
+}
 
 impl Engine {
-    pub fn new() -> Self { Self {} }
-    pub fn from_state(_state: GameState) -> Self { Self {} }
-    pub fn get_state(&self) -> GameState { GameState {} }
-    pub fn get_available_moves(&self) -> Vec<Move> { Vec::new() }
-    pub fn make_move(&mut self, _m: &Move) {}
+    pub fn new() -> Self {
+        let state = new_game(None).unwrap_or_else(|_| "{}".to_string());
+        Self { state }
+    }
+
+    pub fn from_state(state: GameState) -> Self {
+        Self { state: state.json }
+    }
+
+    pub fn get_state(&self) -> GameState {
+        GameState {
+            json: self.state.clone(),
+        }
+    }
+
+    pub fn get_available_moves(&self) -> Vec<Move> {
+        let encoded = self.get_state().encoded();
+        legal_moves(&encoded)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|m| Move { mv: m })
+            .collect()
+    }
+
+    pub fn make_move(&mut self, m: &Move) {
+        if let Ok((next, _)) = play_move(&self.state, &m.mv) {
+            self.state = next;
+        }
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Move;
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct Move {
+    mv: String,
+}
 
 impl Move {
-    pub fn get_move_index(&self) -> usize { 0 }
+    pub fn get_move_index(&self) -> usize {
+        move_index(&self.mv).unwrap_or(0)
+    }
+
+    #[allow(dead_code)]
+    pub fn from_index(idx: usize) -> Option<Self> {
+        move_from_index(idx).ok().flatten().map(|m| Move { mv: m })
+    }
 }
 
-pub use network::NeuralNet;
-pub use mcts::MCTS;
 pub use coach::Coach;
+pub use mcts::MCTS;
+pub use network::NeuralNet;
 
 #[derive(Debug, Clone)]
 pub struct TrainingConfig {
@@ -71,9 +132,11 @@ impl Default for TrainingConfig {
 
 #[pyfunction]
 pub fn run_mcts_for_state(state_json: &str, simulations: usize) -> PyResult<String> {
-    let state: GameState = serde_json::from_str(state_json)
+    serde_json::from_str::<Value>(state_json)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-    let engine = Engine::from_state(state);
+    let engine = Engine::from_state(GameState {
+        json: state_json.to_string(),
+    });
     let neural_net = NeuralNet::new(156, 96)?;
     let mut mcts = MCTS::new(1.0, neural_net);
     let probs = mcts.search(&engine, 0.0, simulations);

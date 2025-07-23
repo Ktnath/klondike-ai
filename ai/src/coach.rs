@@ -1,6 +1,6 @@
-use std::collections::VecDeque;
+use crate::{Engine, NeuralNet, TrainingConfig, MCTS};
 use rand::{Rng, SeedableRng};
-use crate::{Engine, NeuralNet, MCTS, TrainingConfig};
+use std::collections::VecDeque;
 
 pub struct Coach {
     neural_net: NeuralNet,
@@ -34,7 +34,9 @@ impl Coach {
             }
 
             // Fusionner tous les exemples pour l'entraînement
-            let training_data: Vec<_> = self.training_examples.iter()
+            let training_data: Vec<_> = self
+                .training_examples
+                .iter()
                 .flat_map(|examples| examples.iter().cloned())
                 .collect();
 
@@ -80,9 +82,10 @@ impl Coach {
             // Sélectionner et jouer un coup
             let selected_move = if temp == 0.0 {
                 // Choisir le meilleur coup
-                probs.iter()
+                probs
+                    .iter()
                     .max_by(|(_, p1), (_, p2)| p1.partial_cmp(p2).unwrap())
-                    .map(|(m, _)| *m)
+                    .map(|(m, _)| m.clone())
                     .unwrap()
             } else {
                 // Échantillonner selon les probabilités
@@ -90,11 +93,11 @@ impl Coach {
                 #[allow(deprecated)]
                 let r: f32 = rng.gen();
                 let mut sum = 0.0;
-                let mut selected = probs[0].0;
+                let mut selected = probs[0].0.clone();
                 for (mov, prob) in probs.iter() {
                     sum += prob;
                     if sum > r {
-                        selected = *mov;
+                        selected = mov.clone();
                         break;
                     }
                 }

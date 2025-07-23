@@ -1,6 +1,6 @@
+use crate::{Engine, Move, NeuralNet};
 use std::collections::HashMap;
 use std::f32;
-use crate::{Engine, Move, NeuralNet};
 
 #[derive(Debug)]
 struct Edge {
@@ -44,12 +44,13 @@ impl MCTS {
 
     pub fn search(&mut self, engine: &Engine, temp: f32, simulations: usize) -> Vec<(Move, f32)> {
         let state_str = self.get_state_str(engine);
-        
+
         // Si l'état n'a pas été visité, l'évaluer avec le réseau de neurones
         if !self.edges.contains_key(&state_str) {
             let (pi, _) = self.evaluate(engine);
             let moves = engine.get_available_moves();
-            let edges: Vec<Edge> = moves.iter()
+            let edges: Vec<Edge> = moves
+                .iter()
                 .map(|m| Edge::new(pi[m.get_move_index()]))
                 .collect();
             self.edges.insert(state_str.clone(), edges);
@@ -63,9 +64,10 @@ impl MCTS {
         // Calculer les probabilités de chaque coup
         let edges = self.edges.get(&state_str).unwrap();
         let moves = engine.get_available_moves();
-        let mut probs: Vec<(Move, f32)> = moves.iter()
+        let mut probs: Vec<(Move, f32)> = moves
+            .iter()
             .zip(edges.iter())
-            .map(|(m, e)| (*m, (e.visit_count as f32).powf(1.0 / temp)))
+            .map(|(m, e)| (m.clone(), (e.visit_count as f32).powf(1.0 / temp)))
             .collect();
 
         // Normaliser les probabilités
@@ -89,7 +91,8 @@ impl MCTS {
         if !self.edges.contains_key(&state_str) {
             let (pi, v) = self.evaluate(&engine);
             let moves = engine.get_available_moves();
-            let edges: Vec<Edge> = moves.iter()
+            let edges: Vec<Edge> = moves
+                .iter()
                 .map(|m| Edge::new(pi[m.get_move_index()]))
                 .collect();
             self.edges.insert(state_str, edges);
@@ -101,7 +104,8 @@ impl MCTS {
         let edges = self.edges.get(&state_str).unwrap();
         let total_visits: i32 = edges.iter().map(|e| e.visit_count).sum();
 
-        let (best_move, _best_edge) = moves.iter()
+        let (best_move, _best_edge) = moves
+            .iter()
             .zip(edges.iter())
             .max_by(|(_, e1), (_, e2)| {
                 let score1 = self.uct_score(e1, total_visits as f32);
@@ -132,8 +136,8 @@ impl MCTS {
             return f32::INFINITY;
         }
 
-        edge.mean_action_value +
-            self.cpuct * edge.prior * (total_visits.sqrt() / (1.0 + edge.visit_count as f32))
+        edge.mean_action_value
+            + self.cpuct * edge.prior * (total_visits.sqrt() / (1.0 + edge.visit_count as f32))
     }
 
     fn get_state_str(&self, engine: &Engine) -> String {
@@ -144,7 +148,7 @@ impl MCTS {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use klondike_core::Engine;
+    use crate::Engine;
 
     #[test]
     fn test_mcts_creation() {
@@ -162,7 +166,7 @@ mod tests {
 
         let probs = mcts.search(&engine, 1.0, 10);
         assert!(!probs.is_empty());
-        
+
         let sum: f32 = probs.iter().map(|(_, p)| p).sum();
         assert!((sum - 1.0).abs() < 1e-6);
     }
