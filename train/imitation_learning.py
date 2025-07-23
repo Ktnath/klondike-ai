@@ -14,6 +14,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+from env.klondike_env import KlondikeEnv
 
 
 class MLP(nn.Module):
@@ -126,6 +127,85 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
     logging.info("Model saved to %s", model_path)
 
 
+def fine_tune_model(
+    model: MLP,
+    dataset: TensorDataset,
+    epochs: int,
+    intentions: Optional[torch.Tensor] = None,
+) -> None:
+    """Fine tune a pre-trained model on a dataset with a scheduler."""
+    loader = DataLoader(dataset, batch_size=64, shuffle=True)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=max(1, epochs // 3), gamma=0.5
+    )
+
+    for epoch in range(1, epochs + 1):
+        epoch_loss = 0.0
+        for X_batch, y_batch in loader:
+            optimizer.zero_grad()
+            logits = model(X_batch)
+            loss = criterion(logits, y_batch)
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+        scheduler.step()
+        avg_loss = epoch_loss / len(loader)
+        logging.info("Epoch %d FineTune Loss: %.4f", epoch, avg_loss)
+        if intentions is not None:
+            uniq, counts = torch.unique(intentions, return_counts=True)
+            idx = counts.argmax().item()
+            dominant = uniq[idx].item()
+            logging.info(
+                "Epoch %d Dominant intention: %s (%d samples)",
+                epoch,
+                dominant,
+                counts[idx].item(),
+            )
+
+
+def reinforce_train(model: MLP, episodes: int, gamma: float = 0.99) -> None:
+    """Simple REINFORCE fine-tuning on the Klondike environment."""
+    env = KlondikeEnv()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+    for episode in range(1, episodes + 1):
+        state = env.reset()
+        done = False
+        states: List[torch.Tensor] = []
+        actions: List[int] = []
+        rewards: List[float] = []
+        while not done:
+            with torch.no_grad():
+                logits = model(torch.tensor(state, dtype=torch.float32))
+                probs = torch.softmax(logits, dim=0)
+            action = int(torch.multinomial(probs, 1).item())
+            next_state, reward, done, _ = env.step(action)
+            states.append(torch.tensor(state, dtype=torch.float32))
+            actions.append(action)
+            rewards.append(float(reward))
+            state = next_state
+
+        returns: List[float] = []
+        R = 0.0
+        for r in reversed(rewards):
+            R = r + gamma * R
+            returns.insert(0, R)
+        returns_t = torch.tensor(returns, dtype=torch.float32)
+        returns_t = (returns_t - returns_t.mean()) / (returns_t.std() + 1e-8)
+
+        logits = model(torch.stack(states))
+        log_probs = torch.log_softmax(logits, dim=1)
+        selected = log_probs[range(len(actions)), actions]
+        loss = -(selected * returns_t).mean()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        logging.info("Episode %d RL Loss: %.4f", episode, loss.item())
+
+
 def evaluate(model_path: str, dataset: TensorDataset) -> None:
     """Evaluate a saved model on a dataset."""
     input_dim = dataset.tensors[0].shape[1]
@@ -150,29 +230,59 @@ def evaluate(model_path: str, dataset: TensorDataset) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Imitation learning from episodes")
-    parser.add_argument(
-        "--episodes_dir",
-        type=str,
-        default="logs/episodes",
-        help="Directory with episode CSVs or path to .npz dataset",
-    )
-    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
-    parser.add_argument("--model_path", type=str, default="models/imitation_model.pth", help="Where to save the model")
+    parser = argparse.ArgumentParser(description="Imitation learning and fine-tuning")
+    parser.add_argument("--episodes_dir", type=str, default="logs/episodes", help="Directory with episode CSVs")
+    parser.add_argument("--epochs", type=int, default=20, help="Training epochs")
+    parser.add_argument("--model_path", type=str, default="models/imitation_model.pth", help="Model to load")
+    parser.add_argument("--output_path", type=str, default="models/final_model.pth", help="Output path")
+    parser.add_argument("--dataset", type=str, help="Dataset for fine-tuning (.npz or CSV dir)")
     parser.add_argument("--test", type=str, help="Optional test dataset (.csv or .npz)")
     parser.add_argument("--use_intentions", action="store_true", help="Use intention labels if available")
+    parser.add_argument("--fine_tune", action="store_true", help="Enable dataset fine-tuning mode")
+    parser.add_argument("--reinforce", action="store_true", help="Enable reinforcement fine-tuning")
+    parser.add_argument("--hybrid", action="store_true", help="Combine imitation and RL")
+    parser.add_argument("--episodes", type=int, default=50, help="RL episodes for fine-tuning")
     args = parser.parse_args()
 
-    X, y, intents = load_data(args.episodes_dir, args.use_intentions)
-    dataset = TensorDataset(X, y)
-    train(dataset, args.epochs, args.model_path, intents)
+    if args.fine_tune:
+        if not args.dataset:
+            parser.error("--dataset is required for --fine_tune")
+        X, y, intents = load_data(args.dataset, args.use_intentions)
+        dataset = TensorDataset(X, y)
+        input_dim = X.shape[1]
+        num_actions = int(y.max().item()) + 1
+        model = MLP(input_dim, num_actions)
+        state = torch.load(args.model_path, map_location=torch.device("cpu"))
+        model.load_state_dict(state)
+        fine_tune_model(model, dataset, args.epochs, intents)
+        if args.reinforce and args.hybrid:
+            reinforce_train(model, args.episodes)
+        os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+        torch.save(model.state_dict(), args.output_path)
+        logging.info("Model saved to %s", args.output_path)
+    elif args.reinforce:
+        env = KlondikeEnv()
+        input_dim = env.observation_space.shape[0]
+        num_actions = env.action_space.n
+        model = MLP(input_dim, num_actions)
+        if os.path.exists(args.model_path):
+            state = torch.load(args.model_path, map_location=torch.device("cpu"))
+            model.load_state_dict(state)
+        reinforce_train(model, args.episodes)
+        os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+        torch.save(model.state_dict(), args.output_path)
+        logging.info("Model saved to %s", args.output_path)
+    else:
+        X, y, intents = load_data(args.episodes_dir, args.use_intentions)
+        dataset = TensorDataset(X, y)
+        train(dataset, args.epochs, args.output_path, intents)
 
-    if args.test:
-        if args.test.endswith(".npz"):
-            X_test, y_test, _ = load_data(args.test, args.use_intentions)
-            test_dataset = TensorDataset(X_test, y_test)
-        else:
-            test_obs, test_actions = load_csv_file(args.test)
-            test_dataset = TensorDataset(torch.stack(test_obs), torch.tensor(test_actions, dtype=torch.long))
-        evaluate(args.model_path, test_dataset)
+        if args.test:
+            if args.test.endswith(".npz"):
+                X_test, y_test, _ = load_data(args.test, args.use_intentions)
+                test_dataset = TensorDataset(X_test, y_test)
+            else:
+                test_obs, test_actions = load_csv_file(args.test)
+                test_dataset = TensorDataset(torch.stack(test_obs), torch.tensor(test_actions, dtype=torch.long))
+            evaluate(args.output_path, test_dataset)
 
