@@ -104,7 +104,7 @@ mod tests {
 
     use core::num::NonZeroU8;
 
-    use crate::{shuffler::default_shuffle, solver::solve, state::Solitaire};
+    use crate::{legacy::solver::solve, shuffler::default_shuffle, state::Solitaire};
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
