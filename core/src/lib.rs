@@ -12,6 +12,9 @@ pub mod formatter;
 pub mod game_theory;
 pub mod hidden;
 pub mod legacy; // LEGACY modules
+// Re-export legacy solver and graph modules for backward compatibility
+pub use crate::legacy::solver;
+pub use crate::legacy::graph;
 pub mod mcts_solver;
 pub mod moves;
 pub mod partial;
