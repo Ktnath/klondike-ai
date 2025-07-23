@@ -194,9 +194,123 @@ pub fn play_move(state: &str, mv: &str) -> PyResult<(String, bool)> {
 }
 
 #[pyfunction]
-pub fn encode_observation(_state: &str) -> PyResult<Vec<f32>> {
-    // Placeholder observation vector used by Python code.
-    Ok(vec![0.0; 156])
+pub fn encode_observation(state: &str) -> PyResult<Vec<f32>> {
+    /// Convert a card string like "AH" or "tc" to a 0..51 index.
+    fn card_index(s: &str) -> Option<usize> {
+        if s.len() < 2 {
+            return None;
+        }
+        let (rank_str, suit_ch) = s.split_at(s.len() - 1);
+        let rank = match rank_str.to_ascii_uppercase().as_str() {
+            "A" => 0,
+            "2" => 1,
+            "3" => 2,
+            "4" => 3,
+            "5" => 4,
+            "6" => 5,
+            "7" => 6,
+            "8" => 7,
+            "9" => 8,
+            "10" => 9,
+            "J" => 10,
+            "Q" => 11,
+            "K" => 12,
+            _ => return None,
+        };
+        let suit = match suit_ch.to_ascii_uppercase().as_str() {
+            "H" => 0,
+            "D" => 1,
+            "C" => 2,
+            "S" => 3,
+            _ => return None,
+        };
+        Some(rank * 4 + suit)
+    }
+
+    let v: Value =
+        serde_json::from_str(state).map_err(|_| PyValueError::new_err("Invalid JSON state"))?;
+
+    // Three one-hot segments of 52 features each.
+    let mut tableau_vec = vec![0.0f32; 52];
+    let mut foundation_vec = vec![0.0f32; 52];
+    let mut other_vec = vec![0.0f32; 52];
+
+    // Foundations
+    if let Some(founds) = v.get("foundations").and_then(|f| f.as_array()) {
+        for stack in founds {
+            if let Some(cards) = stack.as_array() {
+                for card in cards {
+                    if let Some(s) = card.as_str() {
+                        if let Some(idx) = card_index(s) {
+                            foundation_vec[idx] = 1.0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Tableau columns
+    if let Some(columns) = v.get("tableau").and_then(|t| t.as_array()) {
+        for col in columns {
+            if let Some(arr) = col.as_array() {
+                for card in arr {
+                    if let Some(s) = card.as_str() {
+                        if let Some(idx) = card_index(s) {
+                            if s.chars().last().map_or(false, |c| c.is_lowercase()) {
+                                other_vec[idx] = 1.0;
+                            } else {
+                                tableau_vec[idx] = 1.0;
+                            }
+                        }
+                    }
+                }
+            } else if let Some(obj) = col.as_object() {
+                if let Some(cards_val) = obj.get("cards").and_then(|c| c.as_array()) {
+                    let face_down = obj.get("face_down").and_then(|d| d.as_u64()).unwrap_or(0);
+                    for (i, card) in cards_val.iter().enumerate() {
+                        if let Some(s) = card.as_str() {
+                            if let Some(idx) = card_index(s) {
+                                if (i as u64) < face_down {
+                                    other_vec[idx] = 1.0;
+                                } else {
+                                    tableau_vec[idx] = 1.0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Waste pile
+    if let Some(waste) = v.get("waste").and_then(|w| w.as_array()) {
+        for card in waste {
+            if let Some(s) = card.as_str() {
+                if let Some(idx) = card_index(s) {
+                    other_vec[idx] = 1.0;
+                }
+            }
+        }
+    }
+
+    // Stock cards
+    if let Some(stock) = v.get("stock").and_then(|w| w.as_array()) {
+        for card in stock {
+            if let Some(s) = card.as_str() {
+                if let Some(idx) = card_index(s) {
+                    other_vec[idx] = 1.0;
+                }
+            }
+        }
+    }
+
+    let mut obs = Vec::with_capacity(156);
+    obs.extend(tableau_vec);
+    obs.extend(foundation_vec);
+    obs.extend(other_vec);
+    Ok(obs)
 }
 
 #[pyfunction]
