@@ -2,9 +2,44 @@ import argparse
 import json
 import random
 import time
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Iterable
 
 import numpy as np
+
+# Mapping used to convert card indices to readable strings. This mirrors the
+# logic from the Rust implementation and allows pretty display of moves
+# without requiring direct engine support.
+RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+SUITS = ["H", "D", "C", "S"]
+
+
+def _card_from_index(idx: int) -> str:
+    """Return a human readable card string like ``'4D'`` for a raw index."""
+    rank = idx // 4
+    suit = (idx ^ ((idx >> 1) & 2)) % 4
+    if 0 <= rank < len(RANKS) and 0 <= suit < len(SUITS):
+        return f"{RANKS[rank]}{SUITS[suit]}"
+    return str(idx)
+
+
+def pretty_move(move: str) -> str:
+    """Return a readable form of a move string."""
+    parts = move.split()
+    if len(parts) == 2 and parts[1].isdigit():
+        return f"{parts[0]} {_card_from_index(int(parts[1]))}"
+    return move
+
+
+def format_intention(intent: Iterable | str | None) -> str:
+    """Format an intention that may be hierarchical."""
+    if intent is None:
+        return ""
+    if isinstance(intent, (list, tuple, np.ndarray)):
+        parts = [format_intention(p) for p in intent]
+        parts = [p for p in parts if p]
+        return " \u2192 ".join(parts)
+    return str(intent)
+
 
 try:
     from klondike_core import new_game, play_move, move_from_index
@@ -14,7 +49,9 @@ except Exception as exc:  # pragma: no cover - handle missing build
     ) from exc
 
 
-def load_dataset(path: str) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+def load_dataset(
+    path: str,
+) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
     """Load NPZ expert dataset."""
     data = np.load(path, allow_pickle=True)
     actions = data["actions"]
@@ -35,7 +72,9 @@ def format_state(state: str) -> str:
     """Return a simple textual representation of game state."""
     data = json.loads(state)
     lines = []
-    founds = [" ".join(stack) if stack else "[]" for stack in data.get("foundations", [])]
+    founds = [
+        " ".join(stack) if stack else "[]" for stack in data.get("foundations", [])
+    ]
     lines.append("Foundations: " + " | ".join(founds))
     waste = data.get("waste", [])
     lines.append(f"Waste(top3): {' '.join(waste[-3:])}")
@@ -50,7 +89,12 @@ def format_state(state: str) -> str:
     return "\n".join(lines)
 
 
-def replay_episode(actions: np.ndarray, intentions: Optional[np.ndarray], seed: Optional[str], delay: float) -> None:
+def replay_episode(
+    actions: np.ndarray,
+    intentions: Optional[np.ndarray],
+    seed: Optional[str],
+    delay: float,
+) -> None:
     """Replay one episode given actions and optional intentions."""
     state = new_game(seed) if seed is not None else new_game()
     for idx, action in enumerate(actions, 1):
@@ -58,14 +102,15 @@ def replay_episode(actions: np.ndarray, intentions: Optional[np.ndarray], seed: 
         if move is None:
             print(f"Step {idx}: invalid action index {action}")
             break
+        intent_raw = intentions[idx - 1] if intentions is not None else None
+        intent_str = format_intention(intent_raw)
+
         print("=" * 40)
-        print(f"Step {idx}")
+        summary = f"Tour {idx}: {pretty_move(move)}"
+        if intent_str:
+            summary += f" — Intention: {intent_str}"
+        print(summary)
         print(format_state(state))
-        intent = intentions[idx - 1] if intentions is not None else ""
-        if intent:
-            print(f"Action: {move} | Intention: {intent}")
-        else:
-            print(f"Action: {move}")
         state, valid = play_move(state, move)
         if not valid:
             print("Move was invalid according to the engine. Stopping replay.")
@@ -85,7 +130,9 @@ def main() -> None:
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--game", type=int, help="Index of the game to replay (0-based)")
     group.add_argument("--random", action="store_true", help="Pick a random game")
-    parser.add_argument("--delay", type=float, default=1.0, help="Seconds between moves (0 for manual)")
+    parser.add_argument(
+        "--delay", type=float, default=1.0, help="Seconds between moves (0 for manual)"
+    )
     args = parser.parse_args()
 
     actions, dones, intentions, seeds = load_dataset(args.dataset)
