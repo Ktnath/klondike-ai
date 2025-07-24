@@ -30,7 +30,7 @@ mod utils;
 
 use crate::engine::SolitaireEngine;
 use crate::legacy::solver::{solve_with_tracking, SearchResult};
-use crate::moves::Move;
+use crate::moves::Move as EngineMove;
 use crate::pruning::FullPruner;
 use crate::shuffler::default_shuffle;
 use crate::state::Solitaire;
@@ -41,6 +41,42 @@ use pyo3::prelude::*;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use serde_json::Value;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Move {
+    MoveToFoundation { from: usize, foundation: usize },
+    MoveToStack { from: usize, to: usize },
+    FlipCard { stack: usize },
+    MoveKingToEmpty { from: usize },
+}
+
+pub fn move_index(m: &Move) -> usize {
+    match m {
+        Move::MoveToFoundation { from, foundation } => from * 4 + foundation,
+        Move::MoveToStack { from, to } => 28 + from * 7 + to,
+        Move::FlipCard { stack } => 77 + stack,
+        Move::MoveKingToEmpty { from } => 84 + from,
+    }
+}
+
+pub fn move_from_index(index: usize) -> Option<Move> {
+    match index {
+        0..=27 => {
+            let from = index / 4;
+            let foundation = index % 4;
+            Some(Move::MoveToFoundation { from, foundation })
+        }
+        28..=76 => {
+            let relative = index - 28;
+            let from = relative / 7;
+            let to = relative % 7;
+            Some(Move::MoveToStack { from, to })
+        }
+        77..=83 => Some(Move::FlipCard { stack: index - 77 }),
+        84..=90 => Some(Move::MoveKingToEmpty { from: index - 84 }),
+        _ => None,
+    }
+}
 
 fn encode_state(game: &Solitaire) -> String {
     format!("{}", game.encode())
@@ -54,28 +90,28 @@ fn decode_state(data: &str) -> Option<Solitaire> {
     Some(st)
 }
 
-fn parse_move(data: &str) -> Option<Move> {
+fn parse_move(data: &str) -> Option<EngineMove> {
     // very small parser expecting format "<TYPE> <idx>"
     let mut parts = data.split_whitespace();
     let t = parts.next()?;
     let idx: u8 = parts.next()?.parse().ok()?;
     Some(match t {
-        "DS" => Move::DeckStack(crate::card::Card::from_mask_index(idx)),
-        "PS" => Move::PileStack(crate::card::Card::from_mask_index(idx)),
-        "DP" => Move::DeckPile(crate::card::Card::from_mask_index(idx)),
-        "SP" => Move::StackPile(crate::card::Card::from_mask_index(idx)),
-        "R" => Move::Reveal(crate::card::Card::from_mask_index(idx)),
+        "DS" => EngineMove::DeckStack(crate::card::Card::from_mask_index(idx)),
+        "PS" => EngineMove::PileStack(crate::card::Card::from_mask_index(idx)),
+        "DP" => EngineMove::DeckPile(crate::card::Card::from_mask_index(idx)),
+        "SP" => EngineMove::StackPile(crate::card::Card::from_mask_index(idx)),
+        "R" => EngineMove::Reveal(crate::card::Card::from_mask_index(idx)),
         _ => return None,
     })
 }
 
-fn move_to_string(m: Move) -> String {
+fn move_to_string(m: EngineMove) -> String {
     match m {
-        Move::DeckStack(c) => format!("DS {}", c.mask_index()),
-        Move::PileStack(c) => format!("PS {}", c.mask_index()),
-        Move::DeckPile(c) => format!("DP {}", c.mask_index()),
-        Move::StackPile(c) => format!("SP {}", c.mask_index()),
-        Move::Reveal(c) => format!("R {}", c.mask_index()),
+        EngineMove::DeckStack(c) => format!("DS {}", c.mask_index()),
+        EngineMove::PileStack(c) => format!("PS {}", c.mask_index()),
+        EngineMove::DeckPile(c) => format!("DP {}", c.mask_index()),
+        EngineMove::StackPile(c) => format!("SP {}", c.mask_index()),
+        EngineMove::Reveal(c) => format!("R {}", c.mask_index()),
     }
 }
 
@@ -350,14 +386,13 @@ pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
     Ok(count as f32 / 52.0)
 }
 
-#[pyfunction]
-pub fn move_index(_mv: &str) -> PyResult<usize> {
-    // Simplistic constant mapping used for testing
+#[pyfunction(name = "move_index")]
+pub fn move_index_py(_mv: &str) -> PyResult<usize> {
     Ok(0)
 }
 
-#[pyfunction]
-pub fn move_from_index(_idx: usize) -> PyResult<Option<String>> {
+#[pyfunction(name = "move_from_index")]
+pub fn move_from_index_py(_idx: usize) -> PyResult<Option<String>> {
     Ok(None)
 }
 
@@ -366,11 +401,11 @@ pub fn move_from_index(_idx: usize) -> PyResult<Option<String>> {
 pub fn move_to_index(mv: &str) -> PyResult<usize> {
     let mv = parse_move(mv).ok_or_else(|| PyValueError::new_err("invalid move"))?;
     let idx = match mv {
-        Move::DeckStack(c) => 0 * 52 + c.mask_index() as usize,
-        Move::PileStack(c) => 1 * 52 + c.mask_index() as usize,
-        Move::DeckPile(c) => 2 * 52 + c.mask_index() as usize,
-        Move::StackPile(c) => 3 * 52 + c.mask_index() as usize,
-        Move::Reveal(c) => 4 * 52 + c.mask_index() as usize,
+        EngineMove::DeckStack(c) => 0 * 52 + c.mask_index() as usize,
+        EngineMove::PileStack(c) => 1 * 52 + c.mask_index() as usize,
+        EngineMove::DeckPile(c) => 2 * 52 + c.mask_index() as usize,
+        EngineMove::StackPile(c) => 3 * 52 + c.mask_index() as usize,
+        EngineMove::Reveal(c) => 4 * 52 + c.mask_index() as usize,
     };
     Ok(idx)
 }
@@ -383,11 +418,11 @@ pub fn index_to_move(idx: usize) -> PyResult<String> {
     }
     let card = crate::card::Card::from_mask_index((idx % 52) as u8);
     let mv = match idx / 52 {
-        0 => Move::DeckStack(card),
-        1 => Move::PileStack(card),
-        2 => Move::DeckPile(card),
-        3 => Move::StackPile(card),
-        4 => Move::Reveal(card),
+        0 => EngineMove::DeckStack(card),
+        1 => EngineMove::PileStack(card),
+        2 => EngineMove::DeckPile(card),
+        3 => EngineMove::StackPile(card),
+        4 => EngineMove::Reveal(card),
         _ => unreachable!(),
     };
     Ok(move_to_string(mv))
@@ -438,8 +473,8 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_observation, m)?)?;
     m.add_function(wrap_pyfunction!(foundation_count, m)?)?;
     m.add_function(wrap_pyfunction!(is_won, m)?)?;
-    m.add_function(wrap_pyfunction!(move_index, m)?)?;
-    m.add_function(wrap_pyfunction!(move_from_index, m)?)?;
+    m.add_function(wrap_pyfunction!(move_index_py, m)?)?;
+    m.add_function(wrap_pyfunction!(move_from_index_py, m)?)?;
     m.add_function(wrap_pyfunction!(move_to_index, m)?)?;
     m.add_function(wrap_pyfunction!(index_to_move, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
