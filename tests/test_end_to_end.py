@@ -2,8 +2,9 @@ import os
 import sys
 import random
 import numpy as np
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from env.klondike_env import KlondikeEnv
 
 MAX_STEPS = 20
