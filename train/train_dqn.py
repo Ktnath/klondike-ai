@@ -12,6 +12,7 @@ import random
 from ast import literal_eval
 from glob import glob
 from typing import List, Tuple
+from collections import Counter
 
 import numpy as np
 import torch
@@ -36,6 +37,7 @@ from env.reward import is_critical_move
 from utils.config import load_config
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
+from train.intention_embedding import IntentionEncoder
 
 
 class DQN(nn.Module):
@@ -139,27 +141,16 @@ class ReplayBuffer:
         return len(self.buffer)
 
 
-def _load_npz(path: str, use_intentions: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def _load_npz(path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     """Load data from a NPZ expert file."""
     data = np.load(path, allow_pickle=True)
     obs = data["observations"].astype(np.float32)
     actions = data["actions"].astype(np.int64)
-    if use_intentions and "intentions" in data:
-        raw = data["intentions"]
-        if raw.dtype.kind in {"U", "S", "O"}:
-            uniq = sorted(set(raw.tolist()))
-            mapping = {val: i for i, val in enumerate(uniq)}
-            idxs = np.array([mapping[x] for x in raw.tolist()], dtype=np.int64)
-        else:
-            idxs = raw.astype(np.int64)
-        one_hot = np.eye(int(idxs.max()) + 1)[idxs]
-        obs = np.concatenate([obs, one_hot], axis=1)
-    X = torch.tensor(obs, dtype=torch.float32)
-    y = torch.tensor(actions, dtype=torch.long)
-    return X, y
+    intents = data["intentions"] if "intentions" in data else None
+    return obs, actions, intents
 
 
-def _load_csv_dir(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
+def _load_csv_dir(path: str) -> Tuple[np.ndarray, np.ndarray, None]:
     """Load observations/actions from a directory of CSV episode logs."""
     obs_list: List[List[float]] = []
     act_list: List[int] = []
@@ -173,15 +164,15 @@ def _load_csv_dir(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
                 act_list.append(act)
     if not obs_list:
         raise FileNotFoundError(f"No CSV files found in {path}")
-    X = torch.tensor(obs_list, dtype=torch.float32)
-    y = torch.tensor(act_list, dtype=torch.long)
-    return X, y
+    X = np.array(obs_list, dtype=np.float32)
+    y = np.array(act_list, dtype=np.int64)
+    return X, y, None
 
 
-def load_dataset(path: str, use_intentions: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+def load_dataset(path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     """Load dataset from NPZ file or CSV directory."""
     if os.path.isfile(path) and path.endswith(".npz"):
-        return _load_npz(path, use_intentions)
+        return _load_npz(path)
     return _load_csv_dir(path)
 
 
@@ -193,7 +184,37 @@ def train_supervised(
     log_path: str,
 ) -> None:
     """Train the DQN model in a supervised manner from a dataset."""
-    X, y = load_dataset(dataset_path, use_intentions)
+    config = load_config()
+    obs_arr, actions_arr, intents_arr = load_dataset(dataset_path)
+
+    encoder = None
+    if use_intentions and intents_arr is not None:
+        emb_dim = None
+        if config.get("intention_embedding", {}).get("type") == "embedding":
+            emb_dim = int(config.intention_embedding.get("dimension", 4))
+        encoder = IntentionEncoder(embedding_dim=emb_dim)
+        encoder.fit([str(i) for i in intents_arr])
+        intent_vecs = encoder.encode_batch([str(i) for i in intents_arr])
+        combine_mode = config.intention_embedding.get("combine_mode", "concat")
+        if combine_mode == "concat":
+            X = torch.tensor(obs_arr, dtype=torch.float32)
+            X = torch.cat([X, intent_vecs], dim=1)
+        else:
+            obs = torch.tensor(obs_arr, dtype=torch.float32)
+            if obs.shape[1] != intent_vecs.shape[1]:
+                raise ValueError(
+                    "Observation and intention dims must match for add/multiply"
+                )
+            if combine_mode == "add":
+                X = obs + intent_vecs
+            elif combine_mode == "multiply":
+                X = obs * intent_vecs
+            else:
+                raise ValueError(f"Unknown combine mode: {combine_mode}")
+    else:
+        X = torch.tensor(obs_arr, dtype=torch.float32)
+    y = torch.tensor(actions_arr, dtype=torch.long)
+
     dataset = torch.utils.data.TensorDataset(X, y)
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
@@ -233,6 +254,14 @@ def train_supervised(
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     torch.save(model.state_dict(), model_path)
     logging.info("Model saved to %s", model_path)
+
+    if use_intentions and intents_arr is not None:
+        counts = Counter([str(i) for i in intents_arr])
+        dominant = counts.most_common(1)[0][0]
+        info_path = os.path.join(os.path.dirname(model_path), "intentions_info.json")
+        with open(info_path, "w", encoding="utf-8") as f:
+            json.dump({"dominant_intention": dominant, "counts": counts}, f, ensure_ascii=False, indent=2)
+        logging.info("Intentions info saved to %s", info_path)
 
     # Plot training curves
     try:
@@ -294,7 +323,9 @@ def train(config) -> None:
                 )
                 loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
         else:
-            X, y = load_dataset(expert_dataset_path, False)
+            X_arr, y_arr, _ = load_dataset(expert_dataset_path)
+            X = torch.tensor(X_arr, dtype=torch.float32)
+            y = torch.tensor(y_arr, dtype=torch.long)
             w = torch.ones(len(y))
             dataset = torch.utils.data.TensorDataset(X, y, w)
             loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
