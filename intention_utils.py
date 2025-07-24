@@ -3,13 +3,25 @@ from __future__ import annotations
 """Utilities for intention processing."""
 
 from collections import Counter
-from typing import List, Optional
+from typing import List, Optional, Iterable, Union
 import argparse
 from pathlib import Path
 
 
 # This threshold is intentionally small so that common intentions are kept
 _MIN_FREQ = 2
+
+# Mapping of specific solver intention labels to strategic groups
+INTENTION_HIERARCHY = {
+    "REVEAL": "REVEAL",
+    "MOVE_TO_FOUNDATION": "FOUNDATION",
+    "MOVE_KING_TO_EMPTY": "KING_TO_EMPTY",
+    "MOVE_TO_TABLEAU": "BUILD_STACK",
+    "MOVE_FROM_DECK": "BUILD_STACK",
+    "MOVE_TO_EMPTY_COLUMN": "KING_TO_EMPTY",
+    "CYCLE_DECK": "CYCLE",
+    "UNKNOWN": "OTHER",
+}
 
 
 def simplify_intention(raw: str) -> str:
@@ -34,23 +46,31 @@ def filter_ambiguous(intentions: List[str], min_freq: int = _MIN_FREQ) -> List[O
     return [i if i and counts[i] >= min_freq else None for i in intentions]
 
 
-def group_into_hierarchy(intentions: List[str]) -> List[str]:
-    """Return hierarchical categories for each intention."""
+def group_into_hierarchy(intentions: Union[str, Iterable[str]]) -> Union[str, List[str]]:
+    """Return hierarchical categories for each intention.
+
+    Accepts a single string or any iterable of strings, including generators.
+    """
+
     category_map = {
         "Révéler": "Information",
         "Monter en fondation": "Score",
         "Déplacer vers pile": "Réorganisation",
         "Déplacer vers pile vide": "Réorganisation",
     }
-    result = []
-    for i in intentions:
-        if not i:
-            result.append(i)
-            continue
-        base = simplify_intention(i)
+
+    def _map_one(value: str) -> str:
+        if value.upper() in INTENTION_HIERARCHY:
+            return INTENTION_HIERARCHY.get(value.upper(), "OTHER")
+        base = simplify_intention(value)
         cat = category_map.get(base, "Autre")
-        result.append(f"{base} \u2192 {cat}")
-    return result
+        return f"{base} \u2192 {cat}"
+
+    if isinstance(intentions, str):
+        return _map_one(intentions)
+    if not isinstance(intentions, Iterable):
+        raise TypeError("Input must be a string or iterable of strings.")
+    return [_map_one(i) for i in intentions]
 
 
 def _parse_args() -> argparse.Namespace:
