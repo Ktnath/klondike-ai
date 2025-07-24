@@ -20,6 +20,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+from utils.training import log_epoch_metrics
 from env.klondike_env import KlondikeEnv
 
 # Automatically patched for modular project structure via bootstrap.py
@@ -115,6 +116,8 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
 
     for epoch in range(1, epochs + 1):
         epoch_loss = 0.0
+        correct = 0
+        total = 0
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
             logits = model(X_batch)
@@ -123,12 +126,12 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
             optimizer.step()
 
             preds = logits.argmax(1)
-            acc = (preds == y_batch).float().mean().item()
-            logging.info("Epoch %d Batch Acc: %.3f", epoch, acc)
+            correct += (preds == y_batch).sum().item()
+            total += y_batch.size(0)
 
             epoch_loss += loss.item()
         avg_loss = epoch_loss / len(loader)
-        logging.info("Epoch %d Average Loss: %.4f", epoch, avg_loss)
+        log_epoch_metrics(epoch, avg_loss, correct, total)
         if intentions is not None:
             uniq, counts = torch.unique(intentions, return_counts=True)
             idx = counts.argmax().item()
@@ -156,6 +159,8 @@ def fine_tune_model(
 
     for epoch in range(1, epochs + 1):
         epoch_loss = 0.0
+        correct = 0
+        total = 0
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
             logits = model(X_batch)
@@ -163,10 +168,13 @@ def fine_tune_model(
             loss.backward()
             optimizer.step()
 
+            preds = logits.argmax(1)
+            correct += (preds == y_batch).sum().item()
+            total += y_batch.size(0)
             epoch_loss += loss.item()
         scheduler.step()
         avg_loss = epoch_loss / len(loader)
-        logging.info("Epoch %d FineTune Loss: %.4f", epoch, avg_loss)
+        log_epoch_metrics(epoch, avg_loss, correct, total)
         if intentions is not None:
             uniq, counts = torch.unique(intentions, return_counts=True)
             idx = counts.argmax().item()

@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from utils.config import load_config
 from self_play_generate import generate_self_play
 from train.train_dqn import DQN, DuelingDQN, load_dataset
+from utils.training import log_epoch_metrics
 
 
 def _next_model_version(directory: str = "models") -> int:
@@ -74,8 +75,8 @@ def fine_tune_dqn(
             correct += (preds == by).sum().item()
             total += bx.size(0)
         avg_loss = total_loss / total
+        log_epoch_metrics(epoch, avg_loss, correct, total)
         acc = correct / total if total else 0.0
-        logging.info("Epoch %d - Loss %.4f - Acc %.3f", epoch, avg_loss, acc)
         metrics.append((epoch, avg_loss, acc))
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
