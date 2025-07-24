@@ -37,7 +37,7 @@ from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
-from utils.config import load_config
+from utils.config import load_config, get_config_value
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
 from train.intention_embedding import IntentionEncoder
@@ -280,7 +280,7 @@ def train_supervised(
 
 def train(config) -> None:
     """Train a DQN agent using parameters from the config."""
-    episodes = config.training.episodes
+    episodes = get_config_value(config, "training.episodes", 10000)
     env = KlondikeEnv()
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -295,7 +295,8 @@ def train(config) -> None:
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
-    optimizer = optim.Adam(policy_net.parameters(), lr=config.training.learning_rate)
+    lr = get_config_value(config, "training.learning_rate", 0.00025)
+    optimizer = optim.Adam(policy_net.parameters(), lr=lr)
 
     # Configuration options that may be absent from config.yaml
     expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.npz")
@@ -348,17 +349,18 @@ def train(config) -> None:
     per_alpha = per_cfg.get("alpha", 0.6)
     per_beta = per_cfg.get("beta", 0.4)
 
-    buffer = ReplayBuffer(config.training.buffer_size, alpha=per_alpha)
+    buffer_size = get_config_value(config, "training.buffer_size", 100000)
+    buffer = ReplayBuffer(buffer_size, alpha=per_alpha)
 
     dagger_ds = DaggerDataset(dagger_dataset_path)
-    batch_size = config.training.batch_size
-    gamma = config.training.gamma
-    epsilon = config.training.epsilon.start
-    epsilon_min = config.training.epsilon.min
-    epsilon_decay = config.training.epsilon.decay
-    target_update = config.training.target_update_freq
-    log_interval = config.logging.log_interval
-    save_interval = config.logging.save_interval
+    batch_size = get_config_value(config, "training.batch_size", 64)
+    gamma = get_config_value(config, "training.gamma", 0.99)
+    epsilon = get_config_value(config, "training.epsilon.start", 1.0)
+    epsilon_min = get_config_value(config, "training.epsilon.min", 0.05)
+    epsilon_decay = get_config_value(config, "training.epsilon.decay", 0.995)
+    target_update = get_config_value(config, "training.target_update_freq", 1000)
+    log_interval = get_config_value(config, "logging.log_interval", 100)
+    save_interval = get_config_value(config, "logging.save_interval", 1000)
     log_path = getattr(config.logging, "log_path", "results/train_log.csv")
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
     log_file = open(log_path, "w", newline="", encoding="utf-8")
@@ -609,7 +611,12 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="results/dqn_supervised.pth", help="Output model path")
     parser.add_argument("--log_path", type=str, default="results/train_log.csv", help="CSV log path")
 
-    parser.add_argument("--episodes", type=int, default=config.training.episodes, help="Number of RL episodes")
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        default=get_config_value(config, "training.episodes", 10000),
+        help="Number of RL episodes",
+    )
     parser.add_argument(
         "--log",
         "--log-level",
