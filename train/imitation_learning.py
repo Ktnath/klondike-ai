@@ -138,7 +138,9 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
             dominant = uniq[idx].item()
             logging.info("Epoch %d Dominant intention: %s (%d samples)", epoch, dominant, counts[idx].item())
 
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    dirpath = os.path.dirname(model_path)
+    if dirpath:
+        os.makedirs(dirpath, exist_ok=True)
     torch.save(model.state_dict(), model_path)
     logging.info("Model saved to %s", model_path)
 
@@ -255,7 +257,7 @@ if __name__ == "__main__":
     parser.add_argument("--episodes_dir", type=str, default="logs/episodes", help="Directory with episode CSVs")
     parser.add_argument("--epochs", type=int, default=20, help="Training epochs")
     parser.add_argument("--model_path", type=str, default="models/imitation_model.pth", help="Model to load")
-    parser.add_argument("--output_path", type=str, default="models/final_model.pth", help="Output path")
+    parser.add_argument("--output_path", type=str, default="model.pt", help="Output path")
     parser.add_argument("--dataset", type=str, help="Dataset for fine-tuning (.npz or CSV dir)")
     parser.add_argument("--test", type=str, help="Optional test dataset (.csv or .npz)")
     parser.add_argument("--use_intentions", action="store_true", help="Use intention labels if available")
@@ -285,7 +287,9 @@ if __name__ == "__main__":
         fine_tune_model(model, dataset, args.epochs, intents)
         if args.reinforce and args.hybrid:
             reinforce_train(model, args.episodes)
-        os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+        dirpath = os.path.dirname(args.output_path)
+        if dirpath:
+            os.makedirs(dirpath, exist_ok=True)
         torch.save(model.state_dict(), args.output_path)
         logging.info("Model saved to %s", args.output_path)
     elif args.reinforce:
@@ -297,7 +301,9 @@ if __name__ == "__main__":
             state = torch.load(args.model_path, map_location=torch.device("cpu"))
             model.load_state_dict(state)
         reinforce_train(model, args.episodes)
-        os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+        dirpath = os.path.dirname(args.output_path)
+        if dirpath:
+            os.makedirs(dirpath, exist_ok=True)
         torch.save(model.state_dict(), args.output_path)
         logging.info("Model saved to %s", args.output_path)
     else:
