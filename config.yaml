@@ -87,6 +87,10 @@ intention_embedding:
   combine_mode: concat     # concat | add | multiply
   dropout: 0.1             # régularisation optionnelle
   use_hierarchy: false     # activer la hiérarchisation (si applicable)
+  # List of fine-grained intentions to remove before training
+  filter_list: []
+  # Mapping of specific intentions to more generic ones
+  replacements: {}
 
 # =======================
 # 📝 LOGGING & CHECKPOINTS
