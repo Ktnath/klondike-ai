@@ -2,6 +2,16 @@
 
 Ce document décrit le contenu du fichier `expert_dataset.npz` généré par `generate_expert_dataset.py`. Ce jeu de données rassemble des transitions optimales produites par le solveur du moteur Rust.
 
+## Structure des fichiers .npz
+
+Chaque fichier `.npz` regroupe plusieurs tableaux NumPy :
+
+- `observations` : `np.ndarray` de forme `(N, 156)`, vecteurs normalisés décrivant l'état de jeu.
+- `actions` : `np.ndarray` de forme `(N,)`, entiers compris entre `0` et `95`.
+- `rewards` : `np.ndarray` de forme `(N,)`, valeurs flottantes.
+- `dones` : `np.ndarray` de forme `(N,)`, booléens indiquant la fin de partie.
+- `intentions` : `np.ndarray` de forme `(N,)`, chaînes UTF‑8 représentant l'intention.
+
 ## Contenu du fichier
 
 `expert_dataset.npz` est un fichier NumPy compressé (`np.savez_compressed`) contenant cinq tableaux de même longueur :
@@ -73,3 +83,17 @@ match mv {
 ```
 
 Ces chaînes textuelles sont stockées directement dans le tableau `intentions` du dataset. Elles peuvent servir pour des approches d'apprentissage supervisé ou pour l'analyse stratégique des solutions générées.
+
+## Spécificité
+
+- L'encodage des intentions peut être transformé en vecteurs via la clé `intention_embedding` du fichier `config.yaml`.
+- Les indices d'action sont produits par les fonctions `move_to_index()` et `index_to_move()` exposées dans le moteur.
+
+### Exemple minimal
+
+```python
+import numpy as np
+
+data = np.load("data/expert_dataset.npz")
+print(data["intentions"][:5])
+```
