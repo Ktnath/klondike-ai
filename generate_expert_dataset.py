@@ -29,26 +29,37 @@ def generate_games(num_games: int, output: str) -> None:
     rewards: List[float] = []
     dones: List[bool] = []
     intentions: List[str] = []
+    intentions_high: List[str] = []
 
     for _ in trange(num_games, desc="games"):
         seed = str(shuffle_seed()) if shuffle_seed else str(random.randint(0, 2**32 - 1))
         state = new_game(seed)
         solution = json.loads(solve_klondike(state))
-        result = solution.get("result", [])
-        # Some versions may return intentions separately
-        intents = solution.get("intentions")
+        if isinstance(solution, list):
+            result = [item[0] if isinstance(item, list) and item else item for item in solution]
+            intents = [item[1] if isinstance(item, list) and len(item) > 1 else "" for item in solution]
+            intents_high_raw = [item[2] if isinstance(item, list) and len(item) > 2 else "" for item in solution]
+        else:
+            result = solution.get("result", [])
+            intents = solution.get("intentions")
+            intents_high_raw = solution.get("intentions_high")
         prev_state = state
 
         for idx, item in enumerate(result):
             if isinstance(item, dict):
                 mv_json = item.get("move") or item.get("mv") or item.get("action")
                 intention = item.get("intention", "")
+                intent_high = item.get("intention_high", "")
             else:
                 mv_json = item
                 if isinstance(intents, list) and idx < len(intents):
                     intention = intents[idx]
                 else:
                     intention = ""
+                if isinstance(intents_high_raw, list) and idx < len(intents_high_raw):
+                    intent_high = intents_high_raw[idx]
+                else:
+                    intent_high = ""
 
             obs = encode_observation(prev_state)
             action = move_index(mv_json)
@@ -61,6 +72,7 @@ def generate_games(num_games: int, output: str) -> None:
             rewards.append(float(reward))
             dones.append(bool(done))
             intentions.append(simplify_intention(str(intention)))
+            intentions_high.append(str(intent_high))
 
             prev_state = next_state
             if done:
@@ -81,6 +93,7 @@ def generate_games(num_games: int, output: str) -> None:
         rewards=np.array(rewards, dtype=np.float32),
         dones=np.array(dones, dtype=bool),
         intentions=np.array(intentions, dtype=object),
+        intentions_high=np.array(intentions_high, dtype=object),
     )
 
 

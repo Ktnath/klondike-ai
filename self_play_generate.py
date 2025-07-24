@@ -37,17 +37,17 @@ INTENT_FOUNDATION = "Monter à la fondation"
 INTENT_KING_EMPTY = "Déplacer un roi sur colonne vide"
 INTENT_STACK = "Ranger carte sur une autre"
 
-def _infer_intention(before: str, mv: str, after: str) -> str:
+def _infer_intention(before: str, mv: str, after: str) -> tuple[str, str]:
     """Infer the intention of a move using JSON states."""
     before_dict = json.loads(before)
     after_dict = json.loads(after)
 
     if mv.startswith("R"):
-        return INTENT_REVEAL
+        return INTENT_REVEAL, "REVEAL"
 
     try:
         if foundation_count(after) > foundation_count(before):
-            return INTENT_FOUNDATION
+            return INTENT_FOUNDATION, "FOUNDATION_PLAY"
     except Exception:
         pass
 
@@ -59,13 +59,13 @@ def _infer_intention(before: str, mv: str, after: str) -> str:
         before_empty = count_empty_columns(before_dict)
         after_empty = count_empty_columns(after_dict)
         if idx // 4 == 12 and after_empty < before_empty:
-            return INTENT_KING_EMPTY
-        return INTENT_STACK
+            return INTENT_KING_EMPTY, "EMPTY_COLUMN_MANAGEMENT"
+        return INTENT_STACK, "STACK_PLAY"
 
     if mv_type in {"DS", "PS"}:
-        return INTENT_FOUNDATION
+        return INTENT_FOUNDATION, "FOUNDATION_PLAY"
 
-    return INTENT_STACK
+    return INTENT_STACK, "STACK_PLAY"
 
 
 def _select_action_dqn(model, obs: np.ndarray, valid: Dict[int, str]) -> int:
@@ -98,6 +98,7 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
     rewards: List[float] = []
     dones: List[bool] = []
     intentions: List[str] = []
+    intentions_high: List[str] = []
 
     model = None
     if model_path and not use_mcts:
@@ -132,13 +133,14 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
             next_state, _ = play_move(state, mv)
             reward = compute_base_reward_json(next_state)
             done = bool(is_won(json.loads(next_state)["encoded"]))
-            intention = _infer_intention(state, mv, next_state)
+            fine, high = _infer_intention(state, mv, next_state)
 
             observations.append(list(obs))
             actions.append(int(action))
             rewards.append(float(reward))
             dones.append(bool(done))
-            intentions.append(simplify_intention(str(intention)))
+            intentions.append(simplify_intention(str(fine)))
+            intentions_high.append(str(high))
 
             state = next_state
             if done:
@@ -151,6 +153,7 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
     rewards = [r for r, m in zip(rewards, mask) if m]
     dones = [d for d, m in zip(dones, mask) if m]
     intentions = [i for i in filtered if i is not None]
+    intentions_high = [h for h, m in zip(intentions_high, mask) if m]
 
     np.savez_compressed(
         output,
@@ -159,6 +162,7 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
         rewards=np.array(rewards, dtype=np.float32),
         dones=np.array(dones, dtype=bool),
         intentions=np.array(intentions, dtype=object),
+        intentions_high=np.array(intentions_high, dtype=object),
     )
 
 
