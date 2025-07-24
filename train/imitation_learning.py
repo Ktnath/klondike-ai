@@ -9,6 +9,10 @@ import logging
 from ast import literal_eval
 from typing import List, Tuple, Optional
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from intention_utils import group_into_hierarchy
 
 import numpy as np

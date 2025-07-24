@@ -4,6 +4,10 @@ import os
 from collections import Counter
 from typing import Dict, List
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import numpy as np
 from sklearn.cluster import KMeans, DBSCAN
 try:

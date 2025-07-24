@@ -8,6 +8,9 @@ from klondike_core import Engine
 from klondike_ai import Coach, TrainingConfig, NeuralNet
 import argparse
 import shutil
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.config import load_config
 from self_play_generate import generate_self_play
 from train.train_dqn import DQN, DuelingDQN, load_dataset

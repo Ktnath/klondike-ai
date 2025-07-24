@@ -1,8 +1,9 @@
 import os
 import sys
 import json
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from env.klondike_env import KlondikeEnv
 from env.state_utils import get_hidden_cards, count_empty_columns, extract_foundations
 
