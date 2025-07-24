@@ -6,6 +6,8 @@ from collections import Counter
 from typing import List, Optional, Iterable, Union
 import argparse
 from pathlib import Path
+import logging
+from utils.config import load_config
 
 
 # This threshold is intentionally small so that common intentions are kept
@@ -44,6 +46,43 @@ def filter_ambiguous(intentions: List[str], min_freq: int = _MIN_FREQ) -> List[O
     """Replace rare or empty intentions with ``None``."""
     counts = Counter(intentions)
     return [i if i and counts[i] >= min_freq else None for i in intentions]
+
+
+def simplify_and_filter(intentions: List[str], config: dict | None = None) -> List[str]:
+    """Simplify, replace and filter a list of intentions.
+
+    Parameters
+    ----------
+    intentions:
+        Raw intention strings.
+    config:
+        Optional configuration dictionary. If ``None``, configuration is
+        loaded from :func:`utils.config.load_config`.
+    """
+
+    if config is None:
+        try:
+            config = load_config()
+        except Exception:  # pragma: no cover - config file missing
+            config = {}
+
+    embed_cfg = config.get("intention_embedding", {})
+    filter_list = set(embed_cfg.get("filter_list", []) or [])
+    replacements = embed_cfg.get("replacements", {}) or {}
+
+    processed: List[str] = []
+    for raw in intentions:
+        value = simplify_intention(str(raw))
+        if value in replacements:
+            new_val = replacements[value]
+            if new_val != value:
+                logging.info("Renamed intention '%s' -> '%s'", value, new_val)
+            value = new_val
+        if value in filter_list or not value:
+            logging.info("Filtered intention '%s'", value)
+            continue
+        processed.append(value)
+    return processed
 
 
 def group_into_hierarchy(intentions: Union[str, Iterable[str]]) -> Union[str, List[str]]:
