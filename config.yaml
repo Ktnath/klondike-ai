@@ -52,6 +52,8 @@ self_play:
   num_workers: 4
   sampling_strategy: epsilon-greedy
   save_path: "data/self_play_replays.npz"
+  merge_strategy: append     # append | replace
+  fine_tune_epochs: 5
 
 # =======================
 # 🔎 EVALUATION
