@@ -363,7 +363,7 @@ pub fn move_from_index(_idx: usize) -> PyResult<Option<String>> {
 
 #[pyfunction]
 pub fn solve_klondike(state_json: &str) -> PyResult<String> {
-    let res: Option<Vec<String>> = (|| {
+    let res: Option<Vec<(String, String)>> = (|| {
         let v: Value = serde_json::from_str(state_json).ok()?;
         let encoded = v.get("encoded")?.as_str()?;
         let mut state = decode_state(encoded)?;
@@ -372,19 +372,19 @@ pub fn solve_klondike(state_json: &str) -> PyResult<String> {
             solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
 
         if status == SearchResult::Solved {
-            let (moves, _) = history?;
-            Some(moves.iter().copied().map(move_to_string).collect())
+            let (_, labeled) = history?;
+            Some(
+                labeled
+                    .iter()
+                    .map(|lm| (move_to_string(lm.mv), lm.intention.clone()))
+                    .collect(),
+            )
         } else {
             None
         }
     })();
 
-    let json = match res {
-        Some(moves) => serde_json::json!({ "result": moves }),
-        None => serde_json::json!({ "result": null }),
-    };
-
-    serde_json::to_string(&json).map_err(|e| PyValueError::new_err(e.to_string()))
+    serde_json::to_string(&res).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 #[pyfunction]
