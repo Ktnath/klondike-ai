@@ -1,37 +1,87 @@
+# =======================
+# 🌍 ENVIRONNEMENT
+# =======================
 env:
   name: KlondikeEnv
-  max_steps: 500
-  use_rust_reward: true
+  observation_dim: 156         # Taille du vecteur d'observation encodé
+  action_dim: 96               # Nombre total d’actions possibles
+  use_intentions: true         # Active la fusion intention + observation
+  intention_embedding_dim: 32  # Dimension du vecteur d’intention
+  reward_function: base        # base | critical | heuristic
+  seed: 42
 
+# =======================
+# 🧠 MODELE
+# =======================
+model:
+  hidden_dims: [256, 256]
+  dueling: true                # Active Dueling DQN
+  double: true                 # Active Double DQN
+  dropout: 0.1                 # Pour éviter l’overfitting
+  use_intention_embedding: true
+
+# =======================
+# 🏋️‍♂️ ENTRAINEMENT DQN
+# =======================
 training:
-  episodes: 5000
   batch_size: 64
   buffer_size: 100000
-  learning_rate: 0.0005
+  learning_rate: 0.00025
   gamma: 0.99
+  tau: 0.005                  # Soft update des cibles
+  update_every: 4
+  train_start: 1000
+  max_steps: 500000
   target_update_freq: 1000
-  epsilon:
-    start: 1.0
-    min: 0.05
-    decay: 0.995
 
-model:
-  save_path: models/dqn_model.pth
-  type: dueling
+# =======================
+# 🎯 DATASETS
+# =======================
+dataset:
+  expert_data: "data/expert_dataset.npz"
+  replay_data: "data/self_play_replays.npz"
+  test_data: "data/test_dataset.npz"
+  format: npz                 # npz | csv
 
+# =======================
+# 🔁 SELF-PLAY
+# =======================
+self_play:
+  enabled: true
+  num_games: 1000
+  num_workers: 4
+  sampling_strategy: epsilon-greedy
+  save_path: "data/self_play_replays.npz"
+
+# =======================
+# 🔎 EVALUATION
+# =======================
 evaluation:
   episodes: 100
-  greedy_policy: true
+  eval_every: 10000
+  render: false
+  model_path: "checkpoints/model_final.pth"
 
+# =======================
+# 📚 INTENTIONS
+# =======================
+intentions:
+  enabled: true
+  mode: one-hot              # one-hot | embedding | hierarchical
+  filter_noise: true
+  simplify: true
+  hierarchy:
+    - reveal
+    - foundation
+    - stack_move
+    - king_to_empty
+
+# =======================
+# 📝 LOGGING & CHECKPOINTS
+# =======================
 logging:
-  log_interval: 100
-  save_interval: 500
-  enable_logging: true
-
-# Hybrid learning options
-imitation_learning: true
-dagger: true
-reward_shaping: true
-critical_weighting: true
-expert_dataset: "data/expert_dataset.npz"
-dagger_dataset: "data/dagger_buffer.jsonl"
+  log_dir: logs
+  save_model_every: 10000
+  checkpoint_dir: checkpoints
+  tensorboard: true
+  verbose: true
