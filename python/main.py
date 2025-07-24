@@ -20,6 +20,9 @@ from lonelybot_py import (
 )
 from utils import parse_hidden
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 
 def main():
     game = GameState()

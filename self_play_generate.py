@@ -8,6 +8,9 @@ from intention_utils import simplify_intention, filter_ambiguous
 import numpy as np
 from tqdm import trange
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 try:
     import torch
 except Exception:  # pragma: no cover - optional

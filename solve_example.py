@@ -1,6 +1,9 @@
 import json
 from klondike_core import new_game, solve_klondike
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 
 def main() -> None:
     # Generate a new game state

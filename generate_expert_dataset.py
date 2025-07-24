@@ -8,6 +8,9 @@ from intention_utils import simplify_intention, filter_ambiguous
 from tqdm import trange
 import numpy as np
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 from klondike_core import (
     new_game,
     legal_moves,

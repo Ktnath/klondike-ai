@@ -11,8 +11,9 @@ import optuna
 import yaml
 from tqdm import tqdm
 
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
 
 from utils.config import load_config, DotDict
 from train.train_dqn import train
