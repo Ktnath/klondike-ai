@@ -654,8 +654,8 @@ pub mod solver {
             let before = g.clone();
             let mut after = before.clone();
             after.do_move(m);
-            let intention = infer_intention(&before, &m, &after);
-            self.annotated_moves.push(LabeledMove { mv: m, intention });
+            let (intention, high) = infer_intention(&before, &m, &after);
+            self.annotated_moves.push(LabeledMove { mv: m, intention, high_level: high });
             self.history.push(m);
             Control::Ok
         }

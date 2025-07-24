@@ -395,7 +395,7 @@ pub fn index_to_move(idx: usize) -> PyResult<String> {
 
 #[pyfunction]
 pub fn solve_klondike(state_json: &str) -> PyResult<String> {
-    let res: Option<Vec<(String, String)>> = (|| {
+    let res: Option<Vec<(String, String, String)>> = (|| {
         let v: Value = serde_json::from_str(state_json).ok()?;
         let encoded = v.get("encoded")?.as_str()?;
         let mut state = decode_state(encoded)?;
@@ -408,7 +408,13 @@ pub fn solve_klondike(state_json: &str) -> PyResult<String> {
             Some(
                 labeled
                     .iter()
-                    .map(|lm| (move_to_string(lm.mv), lm.intention.clone()))
+                    .map(|lm| {
+                        (
+                            move_to_string(lm.mv),
+                            lm.intention.clone(),
+                            lm.high_level.to_string(),
+                        )
+                    })
                     .collect(),
             )
         } else {
