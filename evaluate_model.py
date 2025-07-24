@@ -8,6 +8,9 @@ import numpy as np
 import torch
 from tqdm import trange
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 from env.klondike_env import KlondikeEnv
 from train.train_dqn import DQN, DuelingDQN
 from self_play_generate import _infer_intention

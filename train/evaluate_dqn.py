@@ -10,8 +10,8 @@ from typing import Any
 
 import torch
 
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from train.train_dqn import DQN, DuelingDQN

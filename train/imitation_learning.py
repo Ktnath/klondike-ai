@@ -18,6 +18,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from env.klondike_env import KlondikeEnv
 
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
+
 
 class MLP(nn.Module):
     """Simple multi-layer perceptron."""

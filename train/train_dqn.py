@@ -26,10 +26,9 @@ except Exception:  # pragma: no cover
     solve_klondike = None
     move_index = None
 
-import sys
-import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Automatically patched for modular project structure via bootstrap.py
+from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
