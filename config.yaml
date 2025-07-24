@@ -77,6 +77,16 @@ intentions:
     - king_to_empty
 
 # =======================
+# 🧩 INTENTION EMBEDDING
+# =======================
+intention_embedding:
+  type: onehot             # onehot | embedding | hierarchical
+  dimension: 4             # nombre de dimensions si embedding
+  combine_mode: concat     # concat | add | multiply
+  dropout: 0.1             # régularisation optionnelle
+  use_hierarchy: false     # activer la hiérarchisation (si applicable)
+
+# =======================
 # 📝 LOGGING & CHECKPOINTS
 # =======================
 logging:
