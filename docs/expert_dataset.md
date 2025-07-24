@@ -97,3 +97,33 @@ import numpy as np
 data = np.load("data/expert_dataset.npz")
 print(data["intentions"][:5])
 ```
+
+## Move Encoding
+
+Each expert game stores a sequence of actions as integers in the `actions` array. These integers are mapped to actual game moves using two Rust functions:
+
+- `move_index(move: &Move) -> usize`: Converts a move to its corresponding index.
+- `move_from_index(index: usize) -> Option<Move>`: Reconstructs the original move from an index.
+
+This mapping ensures that every action in the dataset can be decoded into a concrete Klondike move (e.g., moving a card from a tableau to a foundation or revealing a facedown card).
+
+### Example:
+
+```python
+from klondike_core import move_from_index
+
+# Load action index from dataset
+action_index = actions[0]  # e.g., 42
+
+# Decode the move
+move = move_from_index(action_index)
+print(move)  # -> Move::TableauToFoundation { from: 3, rank: 6 }
+```
+
+Valid Range:
+Currently, valid indices range from 0 to 90. Indices outside this range will return None.
+
+Notes:
+The mappings are guaranteed to be bijective, meaning each move has a unique index and vice versa.
+
+This mapping is essential for training models, replaying games, and logging during reinforcement learning.
