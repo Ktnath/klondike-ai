@@ -25,6 +25,18 @@ class DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
+def get_config_value(config: DotDict, path: str, default: Any | None = None) -> Any:
+    """Safely retrieve a nested configuration value."""
+    current: Any = config
+    for part in path.split("."):
+        if hasattr(current, part):
+            current = getattr(current, part)
+        else:
+            logging.warning("Config key '%s' missing, using default %r", path, default)
+            return default
+    return current
+
+
 def load_config(path: str = "config.yaml") -> DotDict:
     """Load YAML configuration file.
 
