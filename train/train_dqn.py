@@ -38,6 +38,7 @@ from bootstrap import *
 from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
 from utils.config import load_config, get_config_value
+from utils.training import log_epoch_metrics
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
 from train.intention_embedding import IntentionEncoder
@@ -249,8 +250,8 @@ def train_supervised(
             total += bx.size(0)
 
         avg_loss = total_loss / total
+        log_epoch_metrics(epoch, avg_loss, correct, total)
         acc = correct / total if total else 0.0
-        logging.info("Epoch %d - Loss %.4f - Acc %.3f", epoch, avg_loss, acc)
         logger.writerow([epoch, avg_loss, acc])
 
     log_file.close()
