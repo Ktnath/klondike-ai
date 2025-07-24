@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import Counter
 from typing import List, Optional
+import argparse
+from pathlib import Path
 
 
 # This threshold is intentionally small so that common intentions are kept
@@ -49,3 +51,53 @@ def group_into_hierarchy(intentions: List[str]) -> List[str]:
         cat = category_map.get(base, "Autre")
         result.append(f"{base} \u2192 {cat}")
     return result
+
+
+def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments for CLI usage."""
+    parser = argparse.ArgumentParser(
+        description="Group fine-grained intentions into macro categories"
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-f",
+        "--file",
+        type=Path,
+        help="Path to text file containing intentions (comma-separated or one per line).",
+    )
+    group.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        help="Comma-separated list of intentions provided directly on the command line.",
+    )
+    return parser.parse_args()
+
+
+def _read_intentions(args: argparse.Namespace) -> List[str]:
+    """Load intentions from a file or from the inline ``--input`` string."""
+    if args.file:
+        text = args.file.read_text(encoding="utf-8").strip()
+    else:
+        text = args.input.strip()
+
+    # Determine whether the text contains commas or new lines
+    if "," in text and not "\n" in text:
+        raw = [t.strip() for t in text.split(",") if t.strip()]
+    else:
+        lines = text.splitlines()
+        raw = []
+        for line in lines:
+            if "," in line:
+                raw.extend(t.strip() for t in line.split(",") if t.strip())
+            elif line.strip():
+                raw.append(line.strip())
+    return raw
+
+
+if __name__ == "__main__":
+    arguments = _parse_args()
+    intentions = _read_intentions(arguments)
+    grouped = group_into_hierarchy(intentions)
+    for g in grouped:
+        print(g)
