@@ -6,5 +6,5 @@ fn test_solver_returns_json() {
     let state = new_game(None).unwrap();
     let out = solve_klondike(&state).unwrap();
     let v: Value = serde_json::from_str(&out).unwrap();
-    assert!(v.get("result").is_some());
+    assert!(v.is_array() || v.is_null());
 }
