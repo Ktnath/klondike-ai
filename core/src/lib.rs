@@ -361,6 +361,38 @@ pub fn move_from_index(_idx: usize) -> PyResult<Option<String>> {
     Ok(None)
 }
 
+/// Convert a move string like "DP 10" to a stable numeric index.
+#[pyfunction]
+pub fn move_to_index(mv: &str) -> PyResult<usize> {
+    let mv = parse_move(mv).ok_or_else(|| PyValueError::new_err("invalid move"))?;
+    let idx = match mv {
+        Move::DeckStack(c) => 0 * 52 + c.mask_index() as usize,
+        Move::PileStack(c) => 1 * 52 + c.mask_index() as usize,
+        Move::DeckPile(c) => 2 * 52 + c.mask_index() as usize,
+        Move::StackPile(c) => 3 * 52 + c.mask_index() as usize,
+        Move::Reveal(c) => 4 * 52 + c.mask_index() as usize,
+    };
+    Ok(idx)
+}
+
+/// Reverse of `move_to_index`, recover the move string from its index.
+#[pyfunction]
+pub fn index_to_move(idx: usize) -> PyResult<String> {
+    if idx >= 5 * 52 {
+        return Err(PyValueError::new_err("index out of range"));
+    }
+    let card = crate::card::Card::from_mask_index((idx % 52) as u8);
+    let mv = match idx / 52 {
+        0 => Move::DeckStack(card),
+        1 => Move::PileStack(card),
+        2 => Move::DeckPile(card),
+        3 => Move::StackPile(card),
+        4 => Move::Reveal(card),
+        _ => unreachable!(),
+    };
+    Ok(move_to_string(mv))
+}
+
 #[pyfunction]
 pub fn solve_klondike(state_json: &str) -> PyResult<String> {
     let res: Option<Vec<(String, String)>> = (|| {
@@ -402,6 +434,8 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(is_won, m)?)?;
     m.add_function(wrap_pyfunction!(move_index, m)?)?;
     m.add_function(wrap_pyfunction!(move_from_index, m)?)?;
+    m.add_function(wrap_pyfunction!(move_to_index, m)?)?;
+    m.add_function(wrap_pyfunction!(index_to_move, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
     m.add_function(wrap_pyfunction!(shuffle_seed, m)?)?;
     m.add_function(wrap_pyfunction!(encode_state_to_json, m)?)?;

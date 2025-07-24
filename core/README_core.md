@@ -57,6 +57,8 @@ L'extension compilée expose les fonctions suivantes :
 | `is_won(state)`         | Indique si la partie est gagnée. | `str` -> `bool` |
 | `move_index(mv)`        | Convertit un coup (JSON) en indice entier [0‑95]. | `str` -> `usize` |
 | `move_from_index(idx)`  | Opération inverse, renvoie le coup correspondant à l'indice ou `None`. | `usize` -> `Option[str]` |
+| `move_to_index(mv)`     | Encode un coup arbitraire vers un index unique. | `str` -> `usize` |
+| `index_to_move(idx)`    | Décodage inverse de l'indice vers la chaîne du coup. | `usize` -> `str` |
 
 Tous les états de jeu et coups sont échangés sous forme de chaînes JSON. Ceci
 permet d'interfacer facilement le moteur avec d'autres langages ou de stocker des
