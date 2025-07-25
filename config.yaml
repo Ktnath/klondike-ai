@@ -14,6 +14,8 @@ env:
 # 🧠 MODELE
 # =======================
 model:
+  type: "dqn"                  # Type de modèle utilisé (dqn, dueling_dqn, etc.)
+  pretrained_path: "model.pt"  # Chemin vers le modèle pré-entraîné
   hidden_dims: [256, 256]
   dueling: true                # Active Dueling DQN
   double: true                 # Active Double DQN
@@ -47,6 +49,12 @@ dataset:
   replay_data: "data/self_play_replays.npz"
   test_data: "data/test_dataset.npz"
   format: npz                 # npz | csv
+
+expert_dataset: "data/expert_dataset.npz"  # Chemin vers le dataset expert
+dagger_dataset: "data/dagger_buffer.jsonl" # Chemin vers le buffer DAgger
+imitation_learning: false                   # Active l'apprentissage par imitation
+dagger: false                               # Active l'entraînement DAgger
+critical_weighting: false                   # Active la pondération des mouvements critiques
 
 # =======================
 # 🔁 SELF-PLAY
@@ -106,3 +114,7 @@ logging:
   checkpoint_dir: checkpoints
   tensorboard: true
   verbose: true
+  log_interval: 100                         # Fréquence de log
+  save_interval: 1000                       # Fréquence de sauvegarde
+  log_path: "results/train_log.csv"         # Fichier de log
+  enable_logging: true                      # Active/désactive les logs CSV
