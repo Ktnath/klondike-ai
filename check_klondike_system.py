@@ -7,6 +7,7 @@ import json
 import logging
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -174,16 +175,21 @@ class Audit:
     def check_compile(self) -> None:
         cmd = ["cargo", "check", "--manifest-path", "core/Cargo.toml", "-q"]
         try:
+            start = time.monotonic()
             subprocess.run(
                 cmd,
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                timeout=5,
+                timeout=30,
             )
+            duration = time.monotonic() - start
+            self.log.info("Compilation succeeded in %.2fs", duration)
             self.status["Test de compilation"] = True
         except Exception as exc:  # pragma: no cover - ignore compile errors
-            self.log.error("Compilation failed: %s", exc)
+            self.log.error(
+                "Compilation failed or timed out after 30s: %s", exc
+            )
             self.status["Test de compilation"] = False
 
     def print_summary(self) -> None:
