@@ -293,6 +293,9 @@ def train(config) -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    logger = logging.getLogger(__name__)
+    max_episode_steps = 1000
+
     model_type = get_config_value(config, "model.type", "dqn")
     model_cls = DuelingDQN if model_type == "dueling" else DQN
 
@@ -398,6 +401,7 @@ def train(config) -> None:
         logging.info("Starting episode %d", episode)
         seed = str(random.randint(0, 2**32 - 1))
         state = env.reset(seed)
+        logger.debug("Episode %d reset with seed %s -> %s", episode, seed, state)
         expert_moves = []
         if use_dagger and solve_klondike and move_index:
             try:
@@ -408,6 +412,7 @@ def train(config) -> None:
         expert_step = 0
         done = False
         episode_reward = 0.0
+        steps_in_episode = 0
         if ep_logging:
             next_ep += 1
             ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
@@ -431,40 +436,79 @@ def train(config) -> None:
             ep_writer.writeheader()
             step_num = 0
 
-        while not done:
+        while not done and steps_in_episode < max_episode_steps:
             current_state = state
             valid_actions = env.get_valid_actions()
-            if random.random() < epsilon:
-                action = random.choice(valid_actions)
-                logging.debug(
-                    "Episode %d step %d: random action %s (epsilon %.3f)",
-                    episode,
-                    step_num if ep_logging else global_step,
-                    action,
-                    epsilon,
-                )
-            else:
-                with torch.no_grad():
-                    q_values = policy_net(
-                        torch.tensor(state, dtype=torch.float32, device=device)
+            logger.debug(
+                "Episode %d step %d: selecting action from %s",
+                episode,
+                steps_in_episode,
+                valid_actions,
+            )
+            try:
+                if random.random() < epsilon:
+                    action = random.choice(valid_actions)
+                    logger.debug(
+                        "Episode %d step %d: random action %s (epsilon %.3f)",
+                        episode,
+                        steps_in_episode,
+                        action,
+                        epsilon,
                     )
-                    q_valid = q_values[valid_actions]
-                    action = valid_actions[int(torch.argmax(q_valid).item())]
-                logging.debug(
-                    "Episode %d step %d: policy action %s",
+                else:
+                    with torch.no_grad():
+                        q_values = policy_net(
+                            torch.tensor(state, dtype=torch.float32, device=device)
+                        )
+                        q_valid = q_values[valid_actions]
+                        action = valid_actions[int(torch.argmax(q_valid).item())]
+                    logger.debug(
+                        "Episode %d step %d: policy action %s",
+                        episode,
+                        steps_in_episode,
+                        action,
+                    )
+            except Exception as exc:
+                logger.exception(
+                    "Action selection failed at episode %d step %d: %s",
                     episode,
-                    step_num if ep_logging else global_step,
-                    action,
+                    steps_in_episode,
+                    exc,
                 )
+                break
 
-            next_state, reward, done, info = env.step(action)
-            logging.debug(
+            logger.debug(
+                "Episode %d step %d: calling env.step(%s)",
+                episode,
+                steps_in_episode,
+                action,
+            )
+            try:
+                next_state, reward, done, info = env.step(action)
+            except Exception as exc:
+                logger.exception(
+                    "env.step failed at episode %d step %d: %s",
+                    episode,
+                    steps_in_episode,
+                    exc,
+                )
+                break
+            logger.debug(
                 "Episode %d step %d: reward %.2f done %s",
                 episode,
-                step_num if ep_logging else global_step,
+                steps_in_episode,
                 reward,
                 done,
             )
+
+            if next_state is None or (hasattr(next_state, "__len__") and len(next_state) == 0):
+                logger.error(
+                    "Invalid observation at episode %d step %d: %s",
+                    episode,
+                    steps_in_episode,
+                    next_state,
+                )
+
             episode_reward += reward
             if use_dagger and expert_step < len(expert_moves):
                 expert_action = expert_moves[expert_step]
@@ -488,6 +532,15 @@ def train(config) -> None:
             priority = 2.0 if use_weighting and is_critical_move(state, next_state) else 1.0
             buffer.push(state, action, reward, next_state, done, priority)
             state = next_state
+
+            steps_in_episode += 1
+            if steps_in_episode >= max_episode_steps and not done:
+                logger.warning(
+                    "Episode %d exceeded max steps %d without done", 
+                    episode, 
+                    max_episode_steps,
+                )
+                done = True
 
             if len(buffer) >= batch_size:
                 sample = buffer.sample(batch_size, beta=per_beta)
