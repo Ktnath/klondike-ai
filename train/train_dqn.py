@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import random
+import pprint
 from ast import literal_eval
 from glob import glob
 from typing import List, Tuple
@@ -37,7 +38,7 @@ from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
-from utils.config import load_config, get_config_value
+from utils.config import load_config, get_config_value, DotDict
 
 # Path used when saving the final trained model
 DEFAULT_MODEL_PATH = "model.pt"
@@ -618,6 +619,14 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="results/dqn_supervised.pth", help="Output model path")
     parser.add_argument("--log_path", type=str, default="results/train_log.csv", help="CSV log path")
 
+    expert_default = get_config_value(config, "expert_dataset", "data/expert_dataset.npz")
+    pretrained_default = get_config_value(config, "model.pretrained_path", DEFAULT_MODEL_PATH)
+
+    parser.add_argument("--expert_dataset", type=str, default=None, help=f"Path to expert dataset (default: {expert_default})")
+    parser.add_argument("--pretrained_model", type=str, default=None, help=f"Path to pretrained model (default: {pretrained_default})")
+    parser.add_argument("--imitation_learning", action="store_true", help="Enable imitation learning")
+    parser.add_argument("--dagger", action="store_true", help="Enable DAgger")
+
     parser.add_argument(
         "--episodes",
         type=int,
@@ -634,6 +643,26 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     logging.getLogger().setLevel(getattr(logging, args.log_level))
+
+    if args.expert_dataset is not None:
+        config.expert_dataset = args.expert_dataset
+    else:
+        config.expert_dataset = expert_default
+
+    if args.pretrained_model is not None:
+        if not hasattr(config, "model"):
+            config.model = DotDict({})
+        config.model.pretrained_path = args.pretrained_model
+    else:
+        if not hasattr(config, "model"):
+            config.model = DotDict({})
+        config.model.pretrained_path = pretrained_default
+    if args.imitation_learning:
+        config.imitation_learning = True
+    if args.dagger:
+        config.dagger = True
+
+    logging.info("Using configuration:\n%s", pprint.pformat(config))
 
     if args.dataset:
         train_supervised(args.dataset, args.use_intentions, args.epochs, args.model_path, args.log_path)
