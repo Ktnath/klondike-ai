@@ -38,6 +38,10 @@ from bootstrap import *
 from env.klondike_env import KlondikeEnv
 from env.reward import is_critical_move
 from utils.config import load_config, get_config_value
+
+# Path used when saving the final trained model
+DEFAULT_MODEL_PATH = "model.pt"
+
 from utils.training import log_epoch_metrics
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
@@ -288,7 +292,7 @@ def train(config) -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model_type = getattr(config.model, "type", "dqn")
+    model_type = get_config_value(config, "model.type", "dqn")
     model_cls = DuelingDQN if model_type == "dueling" else DQN
 
     policy_net = model_cls(input_dim, action_dim).to(device)
@@ -300,11 +304,11 @@ def train(config) -> None:
     optimizer = optim.Adam(policy_net.parameters(), lr=lr)
 
     # Configuration options that may be absent from config.yaml
-    expert_dataset_path = getattr(config, "expert_dataset", "data/expert_dataset.npz")
-    dagger_dataset_path = getattr(config, "dagger_dataset", "data/dagger_buffer.jsonl")
-    use_imitation = bool(getattr(config, "imitation_learning", False))
-    use_dagger = bool(getattr(config, "dagger", False))
-    use_weighting = bool(getattr(config, "critical_weighting", False))
+    expert_dataset_path = get_config_value(config, "expert_dataset", "data/expert_dataset.npz")
+    dagger_dataset_path = get_config_value(config, "dagger_dataset", "data/dagger_buffer.jsonl")
+    use_imitation = bool(get_config_value(config, "imitation_learning", False))
+    use_dagger = bool(get_config_value(config, "dagger", False))
+    use_weighting = bool(get_config_value(config, "critical_weighting", False))
 
     if use_imitation and os.path.exists(expert_dataset_path):
         logging.info("Pretraining from expert dataset %s", expert_dataset_path)
@@ -362,13 +366,13 @@ def train(config) -> None:
     target_update = get_config_value(config, "training.target_update_freq", 1000)
     log_interval = get_config_value(config, "logging.log_interval", 100)
     save_interval = get_config_value(config, "logging.save_interval", 1000)
-    log_path = getattr(config.logging, "log_path", "results/train_log.csv")
+    log_path = get_config_value(config, "logging.log_path", "results/train_log.csv")
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
     log_file = open(log_path, "w", newline="", encoding="utf-8")
     csv_logger = csv.writer(log_file)
     csv_logger.writerow(["episode", "reward", "loss", "epsilon", "win_rate"])
 
-    ep_logging = getattr(config.logging, "enable_logging", False)
+    ep_logging = get_config_value(config, "logging.enable_logging", False)
     episode_dir = os.path.join("logs", "episodes")
     if ep_logging:
         os.makedirs(episode_dir, exist_ok=True)
@@ -378,14 +382,15 @@ def train(config) -> None:
             if f.startswith("episode_") and f.endswith(".csv")
         ]
         next_ep = max(existing) if existing else 0
-    save_path = config.model.save_path
     global_step = 0
     wins = 0
 
     use_amp = torch.cuda.is_available()
     scaler = torch.cuda.amp.GradScaler() if use_amp else None
 
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    save_dir = os.path.dirname(DEFAULT_MODEL_PATH)
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
 
     loss = torch.tensor(0.0)
     for episode in range(1, episodes + 1):
@@ -409,7 +414,7 @@ def train(config) -> None:
                 next_ep += 1
                 ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
             ep_file = open(ep_path, "w", newline="", encoding="utf-8")
-            ep_file.write(f"# model: {os.path.basename(save_path)}\n")
+            ep_file.write(f"# model: {os.path.basename(DEFAULT_MODEL_PATH)}\n")
             ep_writer = csv.DictWriter(
                 ep_file,
                 fieldnames=[
@@ -581,8 +586,9 @@ def train(config) -> None:
             csv_logger.writerow([episode, episode_reward, loss_val, epsilon, win_rate])
 
         if episode % save_interval == 0:
-            base, ext = os.path.splitext(save_path)
-            path = f"{base}_{episode}{ext}"
+            checkpoint_dir = os.path.join("models", "checkpoints")
+            os.makedirs(checkpoint_dir, exist_ok=True)
+            path = os.path.join(checkpoint_dir, f"checkpoint_{episode}.pt")
             torch.save(policy_net.state_dict(), path)
             logging.info("Saved checkpoint to %s", path)
 
@@ -593,8 +599,8 @@ def train(config) -> None:
             "Finished episode %d with total reward %.2f", episode, episode_reward
         )
 
-    torch.save(policy_net.state_dict(), save_path)
-    logging.info("Model saved to %s", save_path)
+    torch.save(policy_net.state_dict(), DEFAULT_MODEL_PATH)
+    logging.info(f"Mod\u00e8le final sauvegard\u00e9 sous {DEFAULT_MODEL_PATH}")
     log_file.close()
 
 
