@@ -38,7 +38,7 @@ except Exception:  # pragma: no cover
 from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
-from env.reward import is_critical_move
+from env.is_critical_move import is_critical_move
 from utils.config import load_config, get_config_value, DotDict
 
 # Path used when saving the final trained model
