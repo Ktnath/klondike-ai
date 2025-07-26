@@ -14,6 +14,8 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from intention_utils import group_into_hierarchy
+from utils.config import load_config
+from train.train_dqn import DQN
 
 import numpy as np
 
@@ -27,21 +29,28 @@ from env.klondike_env import KlondikeEnv
 from bootstrap import *
 
 
-class MLP(nn.Module):
-    """Simple multi-layer perceptron."""
+def _intention_to_index(value: str | int | None) -> int:
+    """Map an intention label to the canonical index."""
+    mapping = {
+        "reveal": 0,
+        "foundation": 1,
+        "stack_move": 2,
+        "king_to_empty": 3,
+    }
+    if isinstance(value, (int, np.integer)):
+        idx = int(value)
+        return idx if 0 <= idx < 4 else 0
+    key = str(value).strip().lower().replace(" ", "_")
+    for name, idx in mapping.items():
+        if name in key:
+            return idx
+    return 0
 
-    def __init__(self, input_dim: int, output_dim: int) -> None:
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, output_dim),
-        )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # noqa: D401
-        return self.net(x)
+def _intention_vector(value: str | int | None) -> torch.Tensor:
+    vec = torch.zeros(4, dtype=torch.float32)
+    vec[_intention_to_index(value)] = 1.0
+    return vec
 
 
 def load_csv_file(path: str) -> Tuple[List[torch.Tensor], List[int]]:
@@ -67,18 +76,16 @@ def load_npz_file(path: str, use_intentions: bool, use_hierarchy: bool = False) 
     if "intentions" in data:
         raw = data["intentions"]
         if raw.dtype.kind in {"U", "S", "O"}:
-            lst = raw.tolist()
+            values = raw.tolist()
             if use_hierarchy:
-                lst = group_into_hierarchy(lst)
-            uniq = sorted(set(lst))
-            mapping = {val: idx for idx, val in enumerate(uniq)}
-            idxs = torch.tensor([mapping[x] for x in lst], dtype=torch.long)
+                values = group_into_hierarchy(values)
+            idxs = torch.tensor([_intention_to_index(v) for v in values], dtype=torch.long)
         else:
-            idxs = torch.tensor(raw, dtype=torch.long)
+            idxs = torch.tensor([_intention_to_index(int(v)) for v in raw], dtype=torch.long)
 
         if use_intentions:
-            one_hot = torch.nn.functional.one_hot(idxs, num_classes=idxs.max().item() + 1).float()
-            obs = torch.cat([obs, one_hot], dim=1)
+            vecs = torch.nn.functional.one_hot(idxs, num_classes=4).float()
+            obs = torch.cat([obs, vecs], dim=1)
         intentions = idxs
 
     return obs, actions, intentions
@@ -106,11 +113,19 @@ def load_data(
 
 def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Optional[torch.Tensor] = None) -> None:
     """Train the imitation model and save it."""
+    cfg = load_config()
+    base_dim = int(getattr(cfg.env, "observation_dim", 156))
+    use_int = bool(getattr(cfg.env, "use_intentions", False))
+    expected_dim = base_dim + 4 if use_int else base_dim
+
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
-    input_dim = dataset.tensors[0].shape[1]
+    if dataset.tensors[0].shape[1] != expected_dim:
+        raise ValueError(
+            f"Dataset dimension {dataset.tensors[0].shape[1]} does not match expected {expected_dim}"
+        )
     num_actions = int(dataset.tensors[1].max().item()) + 1
 
-    model = MLP(input_dim, num_actions)
+    model = DQN(expected_dim, num_actions)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
@@ -146,13 +161,22 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
 
 
 def fine_tune_model(
-    model: MLP,
+    model: DQN,
     dataset: TensorDataset,
     epochs: int,
     intentions: Optional[torch.Tensor] = None,
 ) -> None:
     """Fine tune a pre-trained model on a dataset with a scheduler."""
+    cfg = load_config()
+    base_dim = int(getattr(cfg.env, "observation_dim", 156))
+    use_int = bool(getattr(cfg.env, "use_intentions", False))
+    expected_dim = base_dim + 4 if use_int else base_dim
+
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
+    if dataset.tensors[0].shape[1] != expected_dim:
+        raise ValueError(
+            f"Dataset dimension {dataset.tensors[0].shape[1]} does not match expected {expected_dim}"
+        )
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(
@@ -189,7 +213,7 @@ def fine_tune_model(
             )
 
 
-def reinforce_train(model: MLP, episodes: int, gamma: float = 0.99) -> None:
+def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
     """Simple REINFORCE fine-tuning on the Klondike environment."""
     env = KlondikeEnv(use_intentions=True)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -231,9 +255,16 @@ def reinforce_train(model: MLP, episodes: int, gamma: float = 0.99) -> None:
 
 def evaluate(model_path: str, dataset: TensorDataset) -> None:
     """Evaluate a saved model on a dataset."""
+    cfg = load_config()
+    base_dim = int(getattr(cfg.env, "observation_dim", 156))
+    use_int = bool(getattr(cfg.env, "use_intentions", False))
+    expected_dim = base_dim + 4 if use_int else base_dim
+
     input_dim = dataset.tensors[0].shape[1]
+    if input_dim != expected_dim:
+        raise ValueError(f"Dataset dimension {input_dim} does not match expected {expected_dim}")
     num_actions = int(dataset.tensors[1].max().item()) + 1
-    model = MLP(input_dim, num_actions)
+    model = DQN(expected_dim, num_actions)
     state_dict = torch.load(model_path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
     model.eval()
@@ -272,6 +303,11 @@ if __name__ == "__main__":
     parser.add_argument("--episodes", type=int, default=50, help="RL episodes for fine-tuning")
     args = parser.parse_args()
 
+    cfg = load_config()
+    base_dim = int(getattr(cfg.env, "observation_dim", 156))
+    use_int_cfg = bool(getattr(cfg.env, "use_intentions", False))
+    expected_dim = base_dim + 4 if use_int_cfg else base_dim
+
     if args.fine_tune:
         if not args.dataset:
             parser.error("--dataset is required for --fine_tune")
@@ -279,9 +315,10 @@ if __name__ == "__main__":
             args.dataset, args.use_intentions, args.use_intention_hierarchy
         )
         dataset = TensorDataset(X, y)
-        input_dim = X.shape[1]
+        if X.shape[1] != expected_dim:
+            raise ValueError(f"Dataset dimension {X.shape[1]} does not match expected {expected_dim}")
         num_actions = int(y.max().item()) + 1
-        model = MLP(input_dim, num_actions)
+        model = DQN(expected_dim, num_actions)
         state = torch.load(args.model_path, map_location=torch.device("cpu"))
         model.load_state_dict(state)
         fine_tune_model(model, dataset, args.epochs, intents)
@@ -296,7 +333,9 @@ if __name__ == "__main__":
         env = KlondikeEnv(use_intentions=True)
         input_dim = env.observation_space.shape[0]
         num_actions = env.action_space.n
-        model = MLP(input_dim, num_actions)
+        if input_dim != expected_dim:
+            raise ValueError(f"Env dimension {input_dim} does not match expected {expected_dim}")
+        model = DQN(expected_dim, num_actions)
         if os.path.exists(args.model_path):
             state = torch.load(args.model_path, map_location=torch.device("cpu"))
             model.load_state_dict(state)
