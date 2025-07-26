@@ -261,6 +261,8 @@ def train_supervised(
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
     input_dim = X.shape[1]
+    if use_intentions:
+        assert input_dim == 160, f"Input dimension should be 160, got {input_dim}"
     num_actions = int(y.max().item()) + 1
     model = DQN(input_dim, num_actions)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -317,11 +319,13 @@ def train_supervised(
         logging.warning("Could not generate plot: %s", exc)
 
 
-def train(config) -> None:
+def train(config, *, force_dim_check: bool = False) -> None:
     """Train a DQN agent using parameters from the config."""
     episodes = get_config_value(config, "training.episodes", 10000)
-    env = KlondikeEnv()
+    env = KlondikeEnv(use_intentions=True)
     input_dim = env.observation_space.shape[0]
+    if force_dim_check:
+        logging.info("Observation dim: %d", input_dim)
     action_dim = env.action_space.n
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -339,7 +343,11 @@ def train(config) -> None:
 
     pretrained_path = getattr(getattr(config, "model", DotDict({})), "pretrained_path", None)
     if pretrained_path and os.path.exists(pretrained_path):
-        policy_net.load_state_dict(torch.load(pretrained_path, map_location=device))
+        state = torch.load(pretrained_path, map_location=device)
+        if force_dim_check:
+            first_key = next(iter(state))
+            logging.info("Weight %s shape %s", first_key, tuple(state[first_key].shape))
+        policy_net.load_state_dict(state)
         target_net.load_state_dict(policy_net.state_dict())
         print("✅ Chargement du modèle pré-entraîné")
     else:
@@ -767,6 +775,11 @@ if __name__ == "__main__":
         help="Number of RL episodes",
     )
     parser.add_argument(
+        "--force-dim-check",
+        action="store_true",
+        help="Log input/output dimensions when loading models",
+    )
+    parser.add_argument(
         "--log",
         "--log-level",
         dest="log_level",
@@ -801,4 +814,4 @@ if __name__ == "__main__":
         train_supervised(args.dataset, args.use_intentions, args.epochs, args.model_path, args.log_path)
     else:
         config.training.episodes = args.episodes
-        train(config)
+        train(config, force_dim_check=args.force_dim_check)

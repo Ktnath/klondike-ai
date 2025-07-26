@@ -29,7 +29,7 @@ def evaluate(
     config: Any | None = None,
 ) -> dict[str, Any]:
     """Run evaluation for a number of episodes."""
-    env = KlondikeEnv()
+    env = KlondikeEnv(use_intentions=True)
     input_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 

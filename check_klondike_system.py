@@ -18,6 +18,7 @@ TABLE_HEADERS = (
     "PyO3 bindings",
     "Dataset .npz avec intentions",
     "Observation encodée",
+    "Dimension observation+intention",
     "Modules Python (env, utils)",
     "config.yaml complet",
     "Fichiers scripts présents",
@@ -94,6 +95,35 @@ class Audit:
         except Exception as exc:  # pragma: no cover - runtime check
             self.log.error("encode_observation failed: %s", exc)
             self.status["Observation encodée"] = False
+
+    def check_intention_dim(self) -> None:
+        try:
+            with open("config.yaml", "r", encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+        except Exception as exc:
+            self.log.error("Unable to read config: %s", exc)
+            self.status["Dimension observation+intention"] = False
+            return
+
+        enabled = cfg.get("intentions", {}).get("enabled", False)
+        dim = int(cfg.get("intention_embedding", {}).get("dimension", 4))
+        if not enabled:
+            self.status["Dimension observation+intention"] = True
+            return
+        try:
+            from env.klondike_env import KlondikeEnv
+
+            env = KlondikeEnv(use_intentions=True)
+            obs_dim = env.observation_space.shape[0]
+            expected = 156 + dim
+            if obs_dim != expected:
+                self.log.error("Observation dim %d != expected %d", obs_dim, expected)
+                self.status["Dimension observation+intention"] = False
+            else:
+                self.status["Dimension observation+intention"] = True
+        except Exception as exc:  # pragma: no cover - runtime check
+            self.log.error("Env init failed: %s", exc)
+            self.status["Dimension observation+intention"] = False
 
     def check_config(self) -> None:
         try:
@@ -210,6 +240,7 @@ if __name__ == "__main__":
     audit.check_modules()
     audit.check_bindings()
     audit.check_encode()
+    audit.check_intention_dim()
     audit.check_config()
     audit.check_dataset()
     audit.check_scripts()

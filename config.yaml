@@ -6,7 +6,6 @@ env:
   observation_dim: 156         # Taille du vecteur d'observation encodé
   action_dim: 96               # Nombre total d’actions possibles
   use_intentions: true         # Active la fusion intention + observation
-  intention_embedding_dim: 32  # Dimension du vecteur d’intention
   reward_function: base        # base | critical | heuristic
   seed: 42
 
