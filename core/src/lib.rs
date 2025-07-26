@@ -368,6 +368,15 @@ pub fn is_won(state: &str) -> PyResult<bool> {
 }
 
 #[pyfunction]
+pub fn is_lost(state: &str) -> PyResult<bool> {
+    let st = decode_state(state)
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyValueError, _>("invalid state"))?;
+    let engine: SolitaireEngine<crate::pruning::FullPruner> = st.into();
+    let legal_moves = engine.list_moves();
+    Ok(legal_moves.is_empty() && !engine.state().is_win())
+}
+
+#[pyfunction]
 pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
     let v: Value = serde_json::from_str(state)
         .map_err(|_| PyValueError::new_err("Invalid JSON passed to reward engine"))?;
@@ -473,6 +482,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encode_observation, m)?)?;
     m.add_function(wrap_pyfunction!(foundation_count, m)?)?;
     m.add_function(wrap_pyfunction!(is_won, m)?)?;
+    m.add_function(wrap_pyfunction!(is_lost, m)?)?;
     m.add_function(wrap_pyfunction!(move_index_py, m)?)?;
     m.add_function(wrap_pyfunction!(move_from_index_py, m)?)?;
     m.add_function(wrap_pyfunction!(move_to_index, m)?)?;
