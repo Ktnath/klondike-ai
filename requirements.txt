@@ -11,11 +11,13 @@ optuna
 pandas
 protobuf
 pyyaml
+pyarrow
+pyo3==0.20.0
 pytest
 scikit-learn
 setuptools
 setuptools-rust
 tensorboard
-torch>=1.11.0
+torch>=2.0.0
 tqdm>=4.64.0
 werkzeug
