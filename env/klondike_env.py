@@ -14,6 +14,7 @@ try:
         move_from_index,
         move_index,
         is_won,
+        is_lost,
     )
 except Exception as exc:  # pragma: no cover - explicit error
     raise ImportError(
@@ -89,20 +90,15 @@ class KlondikeEnv(gym.Env):
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
         """Apply an action to the game."""
         assert self.state is not None, "Environment not initialized"
-        prev_state = self.state
-        move_json = move_from_index(action)
-        if move_json is None:
+
+        move = move_from_index(action)
+        if move is None:
             valid = False
         else:
-            self.state, valid = play_move(self.state, move_json)
-        next_state = self.state
+            self.state, valid = play_move(self.state, move)
 
-        encoded = self._encoded(next_state)
-        valid_actions = legal_moves(encoded)
-        won = bool(is_won(encoded))
-        done = won or len(valid_actions) == 0
-        reward = compute_reward(prev_state, action, next_state, done)
+        done = bool(is_won(self.state)) or bool(is_lost(self.state))
+        reward = compute_reward(self.state, move or "", done=done)
+        obs = encode_observation(self.state)
 
-        obs = self._encode_state()
-        info = {"valid": valid}
-        return obs, reward, done, info
+        return obs, reward, done, {}
