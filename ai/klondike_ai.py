@@ -91,7 +91,7 @@ class NeuralNet:
 class Coach:
     """Coordinates self-play and neural network training."""
 
-    def __init__(self, neural_net: NeuralNet, config: TrainingConfig) -> None:
+    def __init__(self, neural_net: NeuralNet, config: TrainingConfig, use_intentions: bool = True) -> None:
         self.neural_net = neural_net
         self.config = config
         try:
@@ -100,7 +100,7 @@ class Coach:
             raise RuntimeError(
                 "Failed to import KlondikeEnv. Ensure the environment is available"
             ) from exc
-        self.env = KlondikeEnv()
+        self.env = KlondikeEnv(use_intentions=use_intentions)  # PATCHED for 160-dim with intentions
         # Default policy simply uses the neural network prediction
         self.policy = self.neural_net
 

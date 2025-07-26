@@ -1,10 +1,10 @@
 import logging
 import os
 import csv
+import json  # PATCHED for 160-dim with intentions
 import torch
 import numpy as np
 from tqdm import tqdm
-from klondike_core import Engine
 from klondike_ai import Coach, TrainingConfig, NeuralNet
 import argparse
 import shutil
@@ -112,8 +112,11 @@ def main():
     os.makedirs("models", exist_ok=True)
 
     # Initialisation du réseau de neurones
-    input_shape = 156  # Taille de l'état du jeu encodé
-    action_size = 96   # Nombre d'actions possibles
+    cfg = load_config()
+    base_dim = getattr(cfg.env, "observation_dim", 156)
+    use_int = getattr(cfg.env, "use_intentions", False)
+    input_shape = base_dim + 4 if use_int else base_dim  # PATCHED for 160-dim with intentions
+    action_size = getattr(cfg.env, "action_dim", 96)
     net = NeuralNet(input_shape, action_size)
 
     if config.load_model and os.path.exists("models/best_model.pth"):
@@ -121,7 +124,11 @@ def main():
         net.load_checkpoint("models", "best_model.pth")
 
     # Création du coach et démarrage de l'entraînement
-    coach = Coach(net, config)
+    coach = Coach(net, config, use_intentions=use_int)  # PATCHED for 160-dim with intentions
+    if coach.env.observation_space.shape[0] != input_shape:  # PATCHED for 160-dim with intentions
+        logging.warning(
+            "Model input dim %d and env dim %d mismatch", input_shape, coach.env.observation_space.shape[0]
+        )
 
     try:
         logging.info("Démarrage de l'entraînement...")
@@ -140,33 +147,38 @@ def main():
 
 def evaluate_model():
     logging.info("Évaluation du modèle...")
-    net = NeuralNet(156, 96)
+    cfg = load_config()
+    base_dim = getattr(cfg.env, "observation_dim", 156)
+    use_int = getattr(cfg.env, "use_intentions", False)
+    input_shape = base_dim + 4 if use_int else base_dim  # PATCHED for 160-dim with intentions
+    action_size = getattr(cfg.env, "action_dim", 96)
+    net = NeuralNet(input_shape, action_size)
     net.load_checkpoint("models", "best_model.pth")
 
-    engine = Engine()
+    from env.klondike_env import KlondikeEnv
+    env = KlondikeEnv(use_intentions=use_int)  # PATCHED for 160-dim with intentions
+
     wins = 0
     total_games = 100
 
     for _ in tqdm(range(total_games)):
-        engine = Engine()
+        state = env.reset()
+        done = False
         moves = 0
         max_moves = 200
 
-        while not engine.get_state().is_won() and moves < max_moves:
-            state = engine.get_state().encode_observation()
-            pi, v = net.predict(state)
-            
-            # Sélectionner le meilleur coup
-            available_moves = engine.get_available_moves()
-            best_move = max(
-                available_moves,
-                key=lambda m: pi[m.get_move_index()]
-            )
-            
-            engine.make_move(best_move)
+        while not done and moves < max_moves:
+            valid_actions = env.get_valid_actions()
+            if not valid_actions:
+                break
+            pi, _ = net.predict(state.tolist())
+            pi_valid = np.array([pi[a] for a in valid_actions])
+            action = valid_actions[int(np.argmax(pi_valid))]
+            next_state, _, done, _ = env.step(action)
+            state = next_state
             moves += 1
 
-        if engine.get_state().is_won():
+        if json.loads(env.state).get("is_won", False):
             wins += 1
 
     win_rate = wins / total_games
