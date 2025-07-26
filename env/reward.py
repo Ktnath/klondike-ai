@@ -13,7 +13,8 @@ USE_RUST_REWARD = True
 
 
 def compute_reward(state: str, move: str, *, done: bool) -> float:
-    """Compute reward for a transition.
+    """
+    Compute reward for a transition.
 
     Parameters
     ----------
@@ -36,16 +37,11 @@ def compute_reward(state: str, move: str, *, done: bool) -> float:
 
     bonus = 0.0
 
-    if core_is_won is not None:
+    if done:
         try:
-            if core_is_won(state):
+            if core_is_won is not None and core_is_won(state):
                 bonus += 10.0
-        except Exception:  # pragma: no cover
-            pass
-
-    if core_is_lost is not None and done and not bonus:
-        try:
-            if core_is_lost(state):
+            elif core_is_lost is not None and core_is_lost(state):
                 bonus -= 1.0
         except Exception:  # pragma: no cover
             pass
