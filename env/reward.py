@@ -37,22 +37,18 @@ def compute_reward(prev_state: str, action: int, next_state: str, done: bool) ->
     except Exception:  # pragma: no cover - invalid json
         return float(base)
 
-    # victory bonus
     encoded = n.get("encoded", next_state)
-    if core_is_won is not None:
-        try:
-            if core_is_won(encoded):
-                bonus += 10.0
-        except Exception:  # pragma: no cover
-            pass
 
-    # penalty if no actions available
-    if legal_moves is not None:
-        try:
-            if len(legal_moves(encoded)) == 0 and not bonus:
-                bonus -= 1.0
-        except Exception:  # pragma: no cover
-            pass
+    if done:
+        # victory bonus
+        if core_is_won is not None:
+            try:
+                if core_is_won(encoded):
+                    bonus += 10.0
+                elif legal_moves is not None and len(legal_moves(encoded)) == 0:
+                    bonus -= 1.0
+            except Exception:  # pragma: no cover
+                pass
 
     # optional bonus for card flipped or moved to foundation
     try:
