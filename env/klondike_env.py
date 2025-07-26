@@ -98,7 +98,9 @@ class KlondikeEnv(gym.Env):
         next_state = self.state
 
         encoded = self._encoded(next_state)
-        done = bool(is_won(encoded)) or len(legal_moves(encoded)) == 0
+        valid_actions = legal_moves(encoded)
+        won = bool(is_won(encoded))
+        done = won or len(valid_actions) == 0
         reward = compute_reward(prev_state, action, next_state, done)
 
         obs = self._encode_state()
