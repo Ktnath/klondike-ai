@@ -18,7 +18,7 @@ import torch
 from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
-from train.train_dqn import DQN, DuelingDQN
+from train.train_dqn import DQN, DuelingDQN, _load_state_dict_checked
 from utils.config import load_config
 
 
@@ -31,6 +31,10 @@ def evaluate(
     """Run evaluation for a number of episodes."""
     env = KlondikeEnv(use_intentions=True)
     input_dim = env.observation_space.shape[0]
+    if input_dim != 160:
+        raise ValueError(
+            f"Environment should provide 160-dim observations, got {input_dim}"
+        )
     action_dim = env.action_space.n
 
     model_type = getattr(config.model, "type", "dqn") if config else "dqn"
@@ -38,7 +42,7 @@ def evaluate(
 
     policy_net = model_cls(input_dim, action_dim)
     state_dict = torch.load(model_path, map_location=torch.device("cpu"))
-    policy_net.load_state_dict(state_dict)
+    _load_state_dict_checked(policy_net, state_dict)
     policy_net.eval()
 
     total_reward = 0.0
