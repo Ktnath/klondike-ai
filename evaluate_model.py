@@ -32,7 +32,7 @@ def load_model(path: str, input_dim: int, action_dim: int) -> torch.nn.Module:
 
 
 def evaluate(model_path: str, episodes: int, use_intentions: bool) -> dict:
-    env = KlondikeEnv(use_intentions=True)
+    env = KlondikeEnv(use_intentions=use_intentions)
     obs_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     policy = load_model(model_path, obs_dim, action_dim)

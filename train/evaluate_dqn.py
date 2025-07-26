@@ -20,6 +20,7 @@ from bootstrap import *
 from env.klondike_env import KlondikeEnv
 from train.train_dqn import DQN, DuelingDQN, _load_state_dict_checked
 from utils.config import load_config
+from klondike_core import is_won
 
 
 def evaluate(
@@ -29,7 +30,10 @@ def evaluate(
     config: Any | None = None,
 ) -> dict[str, Any]:
     """Run evaluation for a number of episodes."""
-    env = KlondikeEnv(use_intentions=True)
+    use_int = True
+    if config is not None and hasattr(config, "env"):
+        use_int = bool(getattr(config.env, "use_intentions", True))
+    env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
     if input_dim != 160:
         raise ValueError(
@@ -68,7 +72,8 @@ def evaluate(
             state = next_state
 
         total_reward += episode_reward
-        if env.state.is_won():
+        encoded = json.loads(env.state)["encoded"]
+        if bool(is_won(encoded)):
             wins += 1
 
     avg_reward = total_reward / episodes

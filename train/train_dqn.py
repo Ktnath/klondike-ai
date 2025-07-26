@@ -342,7 +342,8 @@ def train_supervised(
 def train(config, *, force_dim_check: bool = False) -> None:
     """Train a DQN agent using parameters from the config."""
     episodes = get_config_value(config, "training.episodes", 10000)
-    env = KlondikeEnv(use_intentions=True)
+    use_int = bool(get_config_value(config, "env.use_intentions", True))
+    env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
     if input_dim != 160:
         raise ValueError(
