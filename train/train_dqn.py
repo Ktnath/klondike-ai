@@ -27,10 +27,11 @@ import torch.optim as optim
 
 
 try:
-    from klondike_core import solve_klondike, move_index
+    from klondike_core import solve_klondike, move_index, is_won
 except Exception:  # pragma: no cover
     solve_klondike = None
     move_index = None
+    is_won = None
 
 
 # Automatically patched for modular project structure via bootstrap.py
@@ -183,6 +184,27 @@ def load_dataset(path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     if os.path.isfile(path) and path.endswith(".npz"):
         return _load_npz(path)
     return _load_csv_dir(path)
+
+
+def is_won_state(json_state: str) -> bool:
+    """Return True if the JSON-encoded state indicates a win."""
+    try:
+        data = json.loads(json_state)
+    except Exception:
+        return False
+    if isinstance(data, dict):
+        if "is_won" in data:
+            try:
+                return bool(data["is_won"])
+            except Exception:  # pragma: no cover - malformed state
+                return False
+        encoded = data.get("encoded")
+        if encoded is not None and is_won is not None:
+            try:
+                return bool(is_won(encoded))
+            except Exception:  # pragma: no cover - engine failure
+                return False
+    return False
 
 
 def train_supervised(
@@ -623,7 +645,7 @@ def train(config) -> None:
 
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         logging.debug("Epsilon decayed to %.3f", epsilon)
-        if env.state.is_won():
+        if is_won_state(env.state):
             wins += 1
 
         if episode % log_interval == 0:
