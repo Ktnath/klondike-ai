@@ -109,6 +109,11 @@ class ReplayBuffer:
         self, *transition: Tuple[np.ndarray, int, float, np.ndarray, bool, float]
     ) -> None:
         """Store a transition with maximal priority."""
+        state, _, _, next_state, _, _ = transition
+        if state is not None and len(state) != 160:
+            raise ValueError(f"State dimension must be 160, got {len(state)}")
+        if next_state is not None and len(next_state) != 160:
+            raise ValueError(f"Next state dimension must be 160, got {len(next_state)}")
         max_prio = self.priorities.max() if self.buffer else 1.0
         if len(self.buffer) < self.capacity:
             self.buffer.append(transition)
@@ -218,6 +223,21 @@ def is_won_state(json_state: str) -> bool:
     return False
 
 
+def _load_state_dict_checked(model: nn.Module, state: dict) -> None:
+    """Safely load a state dict ensuring tensor shapes match."""
+    model_state = model.state_dict()
+    mismatched: List[str] = []
+    for key, value in state.items():
+        if key in model_state and value.shape != model_state[key].shape:
+            mismatched.append(
+                f"{key}: checkpoint {tuple(value.shape)} vs model {tuple(model_state[key].shape)}"
+            )
+    if mismatched:
+        msg = "; ".join(mismatched)
+        raise ValueError(f"Incompatible pretrained weights ({msg})")
+    model.load_state_dict(state, strict=False)
+
+
 def train_supervised(
     dataset_path: str,
     use_intentions: bool,
@@ -324,6 +344,10 @@ def train(config, *, force_dim_check: bool = False) -> None:
     episodes = get_config_value(config, "training.episodes", 10000)
     env = KlondikeEnv(use_intentions=True)
     input_dim = env.observation_space.shape[0]
+    if input_dim != 160:
+        raise ValueError(
+            f"Environment should provide 160-dim observations, got {input_dim}"
+        )
     if force_dim_check:
         logging.info("Observation dim: %d", input_dim)
     action_dim = env.action_space.n
@@ -344,10 +368,14 @@ def train(config, *, force_dim_check: bool = False) -> None:
     pretrained_path = getattr(getattr(config, "model", DotDict({})), "pretrained_path", None)
     if pretrained_path and os.path.exists(pretrained_path):
         state = torch.load(pretrained_path, map_location=device)
+        first_key = next(iter(policy_net.state_dict()))
+        if first_key in state and state[first_key].shape != policy_net.state_dict()[first_key].shape:
+            raise ValueError(
+                f"Pretrained model input_dim {state[first_key].shape[1]} does not match expected {policy_net.state_dict()[first_key].shape[1]}"
+            )
         if force_dim_check:
-            first_key = next(iter(state))
-            logging.info("Weight %s shape %s", first_key, tuple(state[first_key].shape))
-        policy_net.load_state_dict(state)
+            logging.info("Loaded state dict keys: %d", len(state))
+        _load_state_dict_checked(policy_net, state)
         target_net.load_state_dict(policy_net.state_dict())
         print("✅ Chargement du modèle pré-entraîné")
     else:
