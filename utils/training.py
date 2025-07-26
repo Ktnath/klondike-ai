@@ -34,3 +34,13 @@ def log_epoch_metrics(
         writer.add_scalar("GlobalAccuracy", acc, epoch)
 
 
+def log_episode(episode: int, reward: float, steps: int) -> None:
+    """Log basic statistics for a finished episode."""
+    logging.info(
+        "Episode %d finished with reward %.2f in %d steps",
+        episode,
+        reward,
+        steps,
+    )
+
+

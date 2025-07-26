@@ -44,7 +44,7 @@ from utils.config import load_config, get_config_value, DotDict
 # Path used when saving the final trained model
 DEFAULT_MODEL_PATH = "model.pt"
 
-from utils.training import log_epoch_metrics
+from utils.training import log_epoch_metrics, log_episode
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
 from train.intention_embedding import IntentionEncoder
@@ -446,11 +446,11 @@ def train(config) -> None:
         os.makedirs(save_dir, exist_ok=True)
 
     loss = torch.tensor(0.0)
+    seed = str(random.randint(0, 2**32 - 1))
+    state = env.reset(seed)
+    logger.debug("Episode 1 reset with seed %s -> %s", seed, state)
     for episode in range(1, episodes + 1):
         logging.info("Starting episode %d", episode)
-        seed = str(random.randint(0, 2**32 - 1))
-        state = env.reset(seed)
-        logger.debug("Episode %d reset with seed %s -> %s", episode, seed, state)
         expert_moves = []
         if use_dagger and solve_klondike and move_index:
             try:
@@ -686,6 +686,7 @@ def train(config) -> None:
                     batch_size,
                 )
 
+        log_episode(episode, episode_reward, steps_in_episode)
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         logging.debug("Epsilon decayed to %.3f", epsilon)
         if is_won_state(env.state):
@@ -725,6 +726,11 @@ def train(config) -> None:
 
         logging.info(
             "Finished episode %d with total reward %.2f", episode, episode_reward
+        )
+        seed = str(random.randint(0, 2**32 - 1))
+        state = env.reset(seed)
+        logger.debug(
+            "Episode %d reset with seed %s -> %s", episode + 1, seed, state
         )
 
     torch.save(policy_net.state_dict(), DEFAULT_MODEL_PATH)
