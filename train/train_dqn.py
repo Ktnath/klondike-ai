@@ -124,8 +124,19 @@ class ReplayBuffer:
         else:
             prios = self.priorities[: self.pos]
         probs = prios**self.alpha
-        probs /= probs.sum()
-        indices = np.random.choice(len(self.buffer), batch_size, p=probs)
+        mask = probs > 0
+        if mask.any():
+            probs = probs[mask]
+            indices_pool = np.arange(len(self.buffer))[mask]
+        else:
+            probs = np.ones_like(prios)
+            indices_pool = np.arange(len(self.buffer))
+        probs_sum = probs.sum()
+        if probs_sum == 0:
+            probs = np.ones_like(probs) / len(probs)
+        else:
+            probs = probs / probs_sum
+        indices = np.random.choice(indices_pool, batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
         states, actions, rewards, next_states, dones, prio_w = zip(*samples)
         total = len(self.buffer)
@@ -396,7 +407,14 @@ def train(config) -> None:
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
     log_file = open(log_path, "w", newline="", encoding="utf-8")
     csv_logger = csv.writer(log_file)
-    csv_logger.writerow(["episode", "reward", "loss", "epsilon", "win_rate"])
+    csv_logger.writerow([
+        "episode",
+        "reward",
+        "loss",
+        "epsilon",
+        "win_rate",
+        "avg_valid_moves",
+    ])
 
     ep_logging = get_config_value(config, "logging.enable_logging", False)
     episode_dir = os.path.join("logs", "episodes")
@@ -435,6 +453,7 @@ def train(config) -> None:
         done = False
         episode_reward = 0.0
         steps_in_episode = 0
+        valid_move_sum = 0
         if ep_logging:
             next_ep += 1
             ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
@@ -461,6 +480,7 @@ def train(config) -> None:
         while not done and steps_in_episode < max_episode_steps:
             current_state = state
             valid_actions = env.get_valid_actions()
+            valid_move_sum += len(valid_actions)
             logger.debug(
                 "Episode %d step %d: selecting action from %s",
                 episode,
@@ -553,6 +573,14 @@ def train(config) -> None:
                 step_num += 1
             priority = 2.0 if use_weighting and is_critical_move(state, next_state) else 1.0
             buffer.push(state, action, reward, next_state, done, priority)
+            logger.debug(
+                "Transition added: s=%s a=%s r=%.2f ns=%s d=%s",
+                state,
+                action,
+                reward,
+                next_state,
+                done,
+            )
             state = next_state
 
             steps_in_episode += 1
@@ -641,7 +669,13 @@ def train(config) -> None:
 
                 if global_step % target_update == 0:
                     target_net.load_state_dict(policy_net.state_dict())
-            global_step += 1
+                global_step += 1
+            else:
+                logger.debug(
+                    "Buffer size %d < batch size %d, skipping training step",
+                    len(buffer),
+                    batch_size,
+                )
 
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         logging.debug("Epsilon decayed to %.3f", epsilon)
@@ -651,15 +685,24 @@ def train(config) -> None:
         if episode % log_interval == 0:
             win_rate = 100.0 * wins / episode
             loss_val = loss.item() if isinstance(loss, torch.Tensor) else loss
+            avg_valid = valid_move_sum / steps_in_episode if steps_in_episode else 0
             logging.info(
-                "Episode %d | Reward: %.2f | Loss: %.4f | Epsilon: %.3f | WinRate: %.2f %%",
+                "Episode %d | Reward: %.2f | Loss: %.4f | Epsilon: %.3f | WinRate: %.2f %% | AvgMoves: %.2f",
                 episode,
                 episode_reward,
                 loss_val,
                 epsilon,
                 win_rate,
+                avg_valid,
             )
-            csv_logger.writerow([episode, episode_reward, loss_val, epsilon, win_rate])
+            csv_logger.writerow([
+                episode,
+                episode_reward,
+                loss_val,
+                epsilon,
+                win_rate,
+                avg_valid,
+            ])
 
         if episode % save_interval == 0:
             checkpoint_dir = os.path.join("models", "checkpoints")
