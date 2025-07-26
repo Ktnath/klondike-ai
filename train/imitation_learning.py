@@ -191,7 +191,7 @@ def fine_tune_model(
 
 def reinforce_train(model: MLP, episodes: int, gamma: float = 0.99) -> None:
     """Simple REINFORCE fine-tuning on the Klondike environment."""
-    env = KlondikeEnv()
+    env = KlondikeEnv(use_intentions=True)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     for episode in range(1, episodes + 1):
@@ -293,7 +293,7 @@ if __name__ == "__main__":
         torch.save(model.state_dict(), args.output_path)
         logging.info("Model saved to %s", args.output_path)
     elif args.reinforce:
-        env = KlondikeEnv()
+        env = KlondikeEnv(use_intentions=True)
         input_dim = env.observation_space.shape[0]
         num_actions = env.action_space.n
         model = MLP(input_dim, num_actions)

@@ -48,7 +48,7 @@ def objective(trial: optuna.Trial) -> float:
     config.logging.log_path = os.path.join(log_dir, f"trial_{trial.number}.csv")
     config.model.save_path = os.path.join(log_dir, f"trial_{trial.number}.pth")
 
-    train(config)
+    train(config, force_dim_check=False)
 
     results = evaluate(
         config.model.save_path, episodes=20, greedy_policy=True, config=config

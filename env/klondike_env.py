@@ -27,15 +27,33 @@ from .reward import compute_reward
 class KlondikeEnv(gym.Env):
     """Environment wrapping the Rust Klondike engine for RL."""
 
-    def __init__(self, seed: str | None = None) -> None:
+    def __init__(self, seed: str | None = None, use_intentions: bool = True) -> None:
         super().__init__()
         self.state: str | None = None
         self.seed: str | None = seed
+        self.use_intentions = use_intentions
         self.action_space = gym.spaces.Discrete(96)
-        # Observation length used by existing training code
-        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(156,), dtype=np.float32)
+        dim = 156 + 4 if self.use_intentions else 156
+        self.observation_space = gym.spaces.Box(0.0, 1.0, shape=(dim,), dtype=np.float32)
 
-    def _encode_state(self) -> np.ndarray:
+    def _intention_to_vec(self, intention: str | None) -> np.ndarray:
+        mapping = {
+            "reveal": 0,
+            "foundation": 1,
+            "stack_move": 2,
+            "king_to_empty": 3,
+        }
+        vec = np.zeros(4, dtype=np.float32)
+        if not intention:
+            return vec
+        key = str(intention).strip().lower().replace(" ", "_")
+        for name, idx in mapping.items():
+            if name in key:
+                vec[idx] = 1.0
+                break
+        return vec
+
+    def _encode_state(self, intention: str | None = None) -> np.ndarray:
         obs = []
         if self.state is not None:
             obs = encode_observation(self.state)
@@ -44,6 +62,8 @@ class KlondikeEnv(gym.Env):
             obs = np.pad(obs, (0, 156 - obs.size))
         else:
             obs = obs[:156]
+        if self.use_intentions:
+            obs = np.concatenate([obs, self._intention_to_vec(intention)])
         return obs
 
     def reset(self, seed: str | None = None) -> np.ndarray:
@@ -97,8 +117,11 @@ class KlondikeEnv(gym.Env):
         else:
             self.state, valid = play_move(self.state, move)
 
-        done = bool(is_won(self.state)) or bool(is_lost(self.state))
+        encoded = self._encoded(self.state)
+        done = bool(is_won(encoded)) or bool(is_lost(encoded))
         reward = compute_reward(self.state, move or "", done=done)
-        obs = encode_observation(self.state)
+        info: Dict[str, Any] = {"valid": bool(valid)}
+        intention = info.get("intention")
+        obs = self._encode_state(intention)
 
-        return obs, reward, done, {}
+        return obs, reward, done, info
