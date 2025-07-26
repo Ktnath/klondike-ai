@@ -337,6 +337,15 @@ def train(config) -> None:
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
+    pretrained_path = getattr(getattr(config, "model", DotDict({})), "pretrained_path", None)
+    if pretrained_path and os.path.exists(pretrained_path):
+        policy_net.load_state_dict(torch.load(pretrained_path, map_location=device))
+        target_net.load_state_dict(policy_net.state_dict())
+        print("✅ Chargement du modèle pré-entraîné")
+    else:
+        if pretrained_path:
+            print(f"❌ Modèle introuvable : {pretrained_path}")
+
     lr = get_config_value(config, "training.learning_rate", 0.00025)
     optimizer = optim.Adam(policy_net.parameters(), lr=lr)
 
