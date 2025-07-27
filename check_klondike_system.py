@@ -143,15 +143,52 @@ class Audit:
             self.status["config.yaml complet"] = False
 
     def check_dataset(self) -> None:
+        """Validate that the expert dataset contains intentions.
+
+        Intentions can either be stored as a dedicated array in the ``.npz``
+        file or concatenated to the observation vectors.  The check relies on
+        ``config.yaml`` to recover the expected observation and intention
+        dimensions.
+        """
+
+        try:
+            with open("config.yaml", "r", encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+            obs_dim = int(cfg["env"]["observation_dim"])
+            int_dim = int(cfg["intention_embedding"]["dimension"])
+            dataset_path = cfg.get("expert_dataset") or cfg.get("dataset", {}).get(
+                "expert_data"
+            )
+        except Exception as exc:
+            self.log.error("Unable to read config: %s", exc)
+            self.status["Dataset .npz avec intentions"] = False
+            return
+
+        if not dataset_path or not Path(dataset_path).is_file():
+            self.log.error("Dataset file not found at %s", dataset_path)
+            self.status["Dataset .npz avec intentions"] = False
+            return
+
+        expected_dim = obs_dim + int_dim
         success = False
-        for path in Path(".").rglob("*.npz"):
-            try:
-                data = np.load(path, allow_pickle=True)
-                if "intentions" in data or "intentions_high" in data:
+        try:
+            data = np.load(dataset_path, allow_pickle=True)
+            if "intentions" in data or "intentions_high" in data:
+                success = True
+            else:
+                obs = data["observations"]
+                if obs.shape[1] == expected_dim:
                     success = True
-                    break
-            except Exception:
-                continue
+                else:
+                    self.log.error(
+                        "Dataset found but incorrect dimension: expected %d, got %d",
+                        expected_dim,
+                        obs.shape[1],
+                    )
+        except Exception as exc:
+            self.log.error("Failed to load dataset: %s", exc)
+            success = False
+
         if not success:
             self.log.error("No .npz dataset with intentions found")
         self.status["Dataset .npz avec intentions"] = success
