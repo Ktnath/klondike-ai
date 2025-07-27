@@ -86,16 +86,16 @@ def generate_games(num_games: int, output: str, use_intentions: bool = False) ->
                 intention_vector = np.array(_intent_vec(intention), dtype=np.float32)
                 obs_vector = np.concatenate([obs_vector, intention_vector])
 
-            observations.append(obs_vector.tolist())
+            # Directly append the numpy array to preserve dimensions
+            observations.append(obs_vector)
             actions.append(int(action))
 
             prev_state = next_state
 
-    np.savez(
-        output,
-        observations=np.array(observations, dtype=np.float32),
-        actions=np.array(actions, dtype=np.int64),
-    )
+    # Stack ensures that all observation vectors have the same length
+    obs_array = np.stack(observations)
+    act_array = np.array(actions, dtype=np.int64)
+    np.savez(output, observations=obs_array, actions=act_array)
 
 
 def main() -> None:
