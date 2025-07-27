@@ -35,9 +35,10 @@ def evaluate(
         use_int = bool(getattr(config.env, "use_intentions", True))
     env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
-    if input_dim != 160:
+    expected_dim = 156 + 4 if use_int else 156
+    if input_dim != expected_dim:
         raise ValueError(
-            f"Environment should provide 160-dim observations, got {input_dim}"
+            f"Environment should provide {expected_dim}-dim observations, got {input_dim}"
         )
     action_dim = env.action_space.n
 

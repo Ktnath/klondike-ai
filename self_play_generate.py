@@ -35,6 +35,23 @@ except Exception:  # pragma: no cover - optional
 from env.state_utils import count_empty_columns
 from train.train_dqn import DQN, DuelingDQN
 
+
+def _intent_vec(label: str | None) -> List[float]:
+    mapping = {
+        "reveal": 0,
+        "foundation": 1,
+        "stack_move": 2,
+        "king_to_empty": 3,
+    }
+    vec = [0.0, 0.0, 0.0, 0.0]
+    if label:
+        key = str(label).strip().lower().replace(" ", "_")
+        for name, idx in mapping.items():
+            if name in key:
+                vec[idx] = 1.0
+                break
+    return vec
+
 INTENT_REVEAL = "Révéler une carte cachée"
 INTENT_FOUNDATION = "Monter à la fondation"
 INTENT_KING_EMPTY = "Déplacer un roi sur colonne vide"
@@ -138,7 +155,8 @@ def generate_self_play(model_path: str | None, output: str, episodes: int, use_m
             done = bool(is_won(json.loads(next_state)["encoded"]))
             fine, high = _infer_intention(state, mv, next_state)
 
-            observations.append(list(obs))
+            obs_full = list(obs) + _intent_vec(fine)
+            observations.append(obs_full)
             actions.append(int(action))
             rewards.append(float(reward))
             dones.append(bool(done))

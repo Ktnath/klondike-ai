@@ -27,6 +27,22 @@ def generate_games(num_games: int, output: str) -> None:
     """Generate expert dataset using the optimal solver."""
     os.makedirs(os.path.dirname(output), exist_ok=True)
 
+    def _intent_vec(label: str | None) -> List[float]:
+        mapping = {
+            "reveal": 0,
+            "foundation": 1,
+            "stack_move": 2,
+            "king_to_empty": 3,
+        }
+        vec = [0.0, 0.0, 0.0, 0.0]
+        if label:
+            key = str(label).strip().lower().replace(" ", "_")
+            for name, idx in mapping.items():
+                if name in key:
+                    vec[idx] = 1.0
+                    break
+        return vec
+
     observations: List[List[float]] = []
     actions: List[int] = []
     rewards: List[float] = []
@@ -70,7 +86,8 @@ def generate_games(num_games: int, output: str) -> None:
             reward = compute_base_reward_json(next_state)
             done = json.loads(next_state).get("is_won", False)
 
-            observations.append(list(obs))
+            obs_full = list(obs) + _intent_vec(intention)
+            observations.append(obs_full)
             actions.append(int(action))
             rewards.append(float(reward))
             dones.append(bool(done))
