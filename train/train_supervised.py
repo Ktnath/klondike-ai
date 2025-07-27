@@ -5,15 +5,14 @@ import logging
 import os
 import sys
 
+import numpy as np
 import torch
 
 # Allow running as standalone script
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from train.train_dqn import DQN, load_dataset  # type: ignore
-from train.intention_embedding import IntentionEncoder
+from klondike_ai import NeuralNet
 from utils.training import log_epoch_metrics
-from utils.config import load_config
 
 
 DEFAULT_MODEL_PATH = "model.pt"
@@ -26,54 +25,33 @@ def main() -> None:
     parser.add_argument("--dataset", type=str, required=True, help="Path to .npz dataset")
     parser.add_argument("--epochs", type=int, default=20, help="Training epochs")
     parser.add_argument("--output", type=str, default=DEFAULT_MODEL_PATH, help="Output model file")
+    parser.add_argument(
+        "--use_intentions",
+        action="store_true",
+        help="Inclure les intentions lors de l’entraînement",
+    )
     args = parser.parse_args()
 
-    config = load_config()
+    data = np.load(args.dataset)
+    X = data["observations"].astype(np.float32)
+    y = data["actions"].astype(np.int64)
 
-    obs_arr, actions_arr, intents_arr = load_dataset(args.dataset)
-    assert intents_arr is not None, "Dataset must contain 'intentions'"
-    assert obs_arr.ndim == 2, "Observations should be a 2D array"
-    base_dim = int(getattr(config.env, "observation_dim", 156))
-    use_int = bool(getattr(config.env, "use_intentions", True))
-    expected_dim = base_dim + 4 if use_int else base_dim
-    assert obs_arr.shape[1] == expected_dim, (
-        f"Expected observation dimension {expected_dim}, got {obs_arr.shape[1]}"
-    )
-    assert len(obs_arr) == len(actions_arr) == len(intents_arr)
-
-    emb_dim = None
-    if config.get("intention_embedding", {}).get("type") == "embedding":
-        emb_dim = int(config.intention_embedding.get("dimension", 4))
-    encoder = IntentionEncoder(embedding_dim=emb_dim)
-    encoder.fit([str(i) for i in intents_arr])
-    intent_vecs = encoder.encode_batch([str(i) for i in intents_arr])
-    combine_mode = config.intention_embedding.get("combine_mode", "concat")
-
-    obs_tensor = torch.tensor(obs_arr, dtype=torch.float32)
-    if combine_mode == "concat":
-        X = torch.cat([obs_tensor, intent_vecs], dim=1)
+    if args.use_intentions:
+        assert X.shape[1] == 160, f"Expected 160 features (156+4), got {X.shape[1]}"
     else:
-        if obs_tensor.shape[1] != intent_vecs.shape[1]:
-            raise ValueError("Observation and intention dims must match for add/multiply")
-        if combine_mode == "add":
-            X = obs_tensor + intent_vecs
-        elif combine_mode == "multiply":
-            X = obs_tensor * intent_vecs
-        else:
-            raise ValueError(f"Unknown combine mode: {combine_mode}")
+        assert X.shape[1] == 156, f"Expected 156 features, got {X.shape[1]}"
 
-    assert X.shape[1] == expected_dim, (
-        f"Input dimension after concatenation should be {expected_dim}, got {X.shape[1]}"
-    )
-    y = torch.tensor(actions_arr, dtype=torch.long)
+    X_tensor = torch.tensor(X, dtype=torch.float32)
+    y_tensor = torch.tensor(y, dtype=torch.long)
 
-    dataset = torch.utils.data.TensorDataset(X, y)
+    dataset = torch.utils.data.TensorDataset(X_tensor, y_tensor)
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
-    action_dim = int(getattr(config.env, "action_dim", 96))
-    model = DQN(input_dim=expected_dim, action_dim=action_dim)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = torch.nn.CrossEntropyLoss()
+    input_dim = X.shape[1]
+    action_dim = int(y_tensor.max().item()) + 1
+    model = NeuralNet(input_dim=input_dim, action_size=action_dim)
+    optimizer = torch.optim.Adam(model.model.parameters(), lr=1e-3)
+    criterion = torch.nn.NLLLoss()
 
     for epoch in range(1, args.epochs + 1):
         total_loss = 0.0
@@ -81,12 +59,12 @@ def main() -> None:
         total = 0
         for bx, by in loader:
             optimizer.zero_grad()
-            logits = model(bx)
-            loss = criterion(logits, by)
+            probs, _ = model.model(bx)
+            loss = criterion(torch.log(probs), by)
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * bx.size(0)
-            preds = logits.argmax(1)
+            preds = probs.argmax(1)
             correct += (preds == by).sum().item()
             total += bx.size(0)
         avg_loss = total_loss / total
