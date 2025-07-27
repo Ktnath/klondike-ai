@@ -25,6 +25,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils.training import log_epoch_metrics
 from env.klondike_env import KlondikeEnv
 
+# Default expert dataset used when no --dataset argument is provided
+DEFAULT_DATASET = os.path.join("data", "expert_dataset.npz")
+
 # Automatically patched for modular project structure via bootstrap.py
 from bootstrap import *
 
@@ -310,28 +313,13 @@ if __name__ == "__main__":
     use_int_cfg = bool(getattr(cfg.env, "use_intentions", False))
     expected_dim = base_dim + 4 if use_int_cfg else base_dim
 
-    if args.fine_tune:
-        if not args.dataset:
-            parser.error("--dataset is required for --fine_tune")
-        X, y, intents = load_data(
-            args.dataset, args.use_intentions, args.use_intention_hierarchy
-        )
-        dataset = TensorDataset(X, y)
-        if X.shape[1] != expected_dim:
-            raise ValueError(f"Dataset dimension {X.shape[1]} does not match expected {expected_dim}")
-        num_actions = int(y.max().item()) + 1
-        model = DQN(expected_dim, num_actions)
-        state = torch.load(args.model_path, map_location=torch.device("cpu"))
-        model.load_state_dict(state)
-        fine_tune_model(model, dataset, args.epochs, intents)
-        if args.reinforce and args.hybrid:
-            reinforce_train(model, args.episodes)
-        dirpath = os.path.dirname(args.output_path)
-        if dirpath:
-            os.makedirs(dirpath, exist_ok=True)
-        torch.save(model.state_dict(), args.output_path)
-        logging.info("Model saved to %s", args.output_path)
-    elif args.reinforce:
+    dataset_path = args.dataset if args.dataset else DEFAULT_DATASET
+
+    # Automatically enable fine tuning when using an NPZ dataset
+    if dataset_path.endswith(".npz"):
+        args.fine_tune = True
+
+    if args.reinforce and not args.fine_tune:
         env = KlondikeEnv(use_intentions=use_int_cfg)
         input_dim = env.observation_space.shape[0]
         num_actions = env.action_space.n
@@ -349,10 +337,37 @@ if __name__ == "__main__":
         logging.info("Model saved to %s", args.output_path)
     else:
         X, y, intents = load_data(
-            args.episodes_dir, args.use_intentions, args.use_intention_hierarchy
+            dataset_path, args.use_intentions, args.use_intention_hierarchy
         )
+        if X.shape[1] != expected_dim:
+            if os.path.isdir(dataset_path) and os.path.basename(dataset_path) == "episodes":
+                logging.warning(
+                    "Observations in %s have dimension %d instead of %d",
+                    dataset_path,
+                    X.shape[1],
+                    expected_dim,
+                )
+            raise SystemExit(
+                f"Dataset dimension {X.shape[1]} is invalid. Use --dataset {DEFAULT_DATASET}"
+            )
+
         dataset = TensorDataset(X, y)
-        train(dataset, args.epochs, args.output_path, intents)
+        if args.fine_tune:
+            num_actions = int(y.max().item()) + 1
+            model = DQN(expected_dim, num_actions)
+            if os.path.exists(args.model_path):
+                state = torch.load(args.model_path, map_location=torch.device("cpu"))
+                model.load_state_dict(state)
+            fine_tune_model(model, dataset, args.epochs, intents)
+            if args.reinforce and args.hybrid:
+                reinforce_train(model, args.episodes)
+            dirpath = os.path.dirname(args.output_path)
+            if dirpath:
+                os.makedirs(dirpath, exist_ok=True)
+            torch.save(model.state_dict(), args.output_path)
+            logging.info("Model saved to %s", args.output_path)
+        else:
+            train(dataset, args.epochs, args.output_path, intents)
 
         if args.test:
             if args.test.endswith(".npz"):
