@@ -22,6 +22,35 @@ except Exception as exc:  # pragma: no cover - explicit error
     ) from exc
 
 from .reward import compute_reward
+from .state_utils import count_empty_columns
+import json
+
+
+def _infer_intention(before: str, mv: str, after: str) -> str:
+    """Infer intention label from two JSON states and a move."""
+    try:
+        before_dict = json.loads(before)
+        after_dict = json.loads(after)
+    except Exception:
+        return ""
+    if mv.startswith("R"):
+        return "reveal"
+    try:
+        from klondike_core import foundation_count
+        if foundation_count(after) > foundation_count(before):
+            return "foundation"
+    except Exception:
+        pass
+    parts = mv.split()
+    mv_type = parts[0] if parts else ""
+    idx = int(parts[1]) if len(parts) > 1 else 0
+    if mv_type in {"DP", "SP"}:
+        if idx // 4 == 12 and count_empty_columns(before_dict) > count_empty_columns(after_dict):
+            return "king_to_empty"
+        return "stack_move"
+    if mv_type in {"DS", "PS"}:
+        return "foundation"
+    return "stack_move"
 
 
 class KlondikeEnv(gym.Env):
@@ -111,17 +140,19 @@ class KlondikeEnv(gym.Env):
         """Apply an action to the game."""
         assert self.state is not None, "Environment not initialized"
 
+        prev = self.state
         move = move_from_index(action)
         if move is None:
             valid = False
+            intention = ""
         else:
             self.state, valid = play_move(self.state, move)
+            intention = _infer_intention(prev, move, self.state) if self.use_intentions else ""
 
         encoded = self._encoded(self.state)
         done = bool(is_won(encoded)) or bool(is_lost(encoded))
         reward = compute_reward(self.state, move or "", done=done)
-        info: Dict[str, Any] = {"valid": bool(valid)}
-        intention = info.get("intention")
+        info: Dict[str, Any] = {"valid": bool(valid), "intention": intention}
         obs = self._encode_state(intention)
 
         return obs, reward, done, info

@@ -33,7 +33,12 @@ def main() -> None:
     obs_arr, actions_arr, intents_arr = load_dataset(args.dataset)
     assert intents_arr is not None, "Dataset must contain 'intentions'"
     assert obs_arr.ndim == 2, "Observations should be a 2D array"
-    assert obs_arr.shape[1] == 160, f"Expected observation dimension 160, got {obs_arr.shape[1]}"
+    base_dim = int(getattr(config.env, "observation_dim", 156))
+    use_int = bool(getattr(config.env, "use_intentions", True))
+    expected_dim = base_dim + 4 if use_int else base_dim
+    assert obs_arr.shape[1] == expected_dim, (
+        f"Expected observation dimension {expected_dim}, got {obs_arr.shape[1]}"
+    )
     assert len(obs_arr) == len(actions_arr) == len(intents_arr)
 
     emb_dim = None
@@ -57,13 +62,16 @@ def main() -> None:
         else:
             raise ValueError(f"Unknown combine mode: {combine_mode}")
 
-    assert X.shape[1] == 160, f"Input dimension after concatenation should be 160, got {X.shape[1]}"
+    assert X.shape[1] == expected_dim, (
+        f"Input dimension after concatenation should be {expected_dim}, got {X.shape[1]}"
+    )
     y = torch.tensor(actions_arr, dtype=torch.long)
 
     dataset = torch.utils.data.TensorDataset(X, y)
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
-    model = DQN(input_dim=160, action_dim=96)
+    action_dim = int(getattr(config.env, "action_dim", 96))
+    model = DQN(input_dim=expected_dim, action_dim=action_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = torch.nn.CrossEntropyLoss()
 

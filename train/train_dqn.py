@@ -98,9 +98,10 @@ class DuelingDQN(nn.Module):
 class ReplayBuffer:
     """Prioritized experience replay buffer."""
 
-    def __init__(self, capacity: int, alpha: float = 0.6) -> None:
+    def __init__(self, capacity: int, alpha: float = 0.6, obs_dim: int = 160) -> None:
         self.capacity = capacity
         self.alpha = alpha
+        self.obs_dim = obs_dim
         self.buffer: List[Tuple[np.ndarray, int, float, np.ndarray, bool, float]] = []
         self.priorities = np.zeros((capacity,), dtype=np.float32)
         self.pos = 0
@@ -110,10 +111,14 @@ class ReplayBuffer:
     ) -> None:
         """Store a transition with maximal priority."""
         state, _, _, next_state, _, _ = transition
-        if state is not None and len(state) != 160:
-            raise ValueError(f"State dimension must be 160, got {len(state)}")
-        if next_state is not None and len(next_state) != 160:
-            raise ValueError(f"Next state dimension must be 160, got {len(next_state)}")
+        if state is not None and len(state) != self.obs_dim:
+            raise ValueError(
+                f"State dimension must be {self.obs_dim}, got {len(state)}"
+            )
+        if next_state is not None and len(next_state) != self.obs_dim:
+            raise ValueError(
+                f"Next state dimension must be {self.obs_dim}, got {len(next_state)}"
+            )
         max_prio = self.priorities.max() if self.buffer else 1.0
         if len(self.buffer) < self.capacity:
             self.buffer.append(transition)
@@ -281,8 +286,11 @@ def train_supervised(
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
     input_dim = X.shape[1]
-    if use_intentions:
-        assert input_dim == 160, f"Input dimension should be 160, got {input_dim}"
+    expected_dim = 156 + 4 if use_intentions else 156
+    if input_dim != expected_dim:
+        raise ValueError(
+            f"Input dimension should be {expected_dim}, got {input_dim}"
+        )
     num_actions = int(y.max().item()) + 1
     model = DQN(input_dim, num_actions)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -345,9 +353,10 @@ def train(config, *, force_dim_check: bool = False) -> None:
     use_int = bool(get_config_value(config, "env.use_intentions", True))
     env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
-    if input_dim != 160:
+    expected_dim = 156 + 4 if use_int else 156
+    if input_dim != expected_dim:
         raise ValueError(
-            f"Environment should provide 160-dim observations, got {input_dim}"
+            f"Environment should provide {expected_dim}-dim observations, got {input_dim}"
         )
     if force_dim_check:
         logging.info("Observation dim: %d", input_dim)
@@ -438,7 +447,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
     per_beta = per_cfg.get("beta", 0.4)
 
     buffer_size = get_config_value(config, "training.buffer_size", 100000)
-    buffer = ReplayBuffer(buffer_size, alpha=per_alpha)
+    buffer = ReplayBuffer(buffer_size, alpha=per_alpha, obs_dim=input_dim)
 
     dagger_ds = DaggerDataset(dagger_dataset_path)
     batch_size = get_config_value(config, "training.batch_size", 64)

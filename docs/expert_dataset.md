@@ -6,7 +6,7 @@ Ce document décrit le contenu du fichier `expert_dataset.npz` généré par `ge
 
 Chaque fichier `.npz` regroupe plusieurs tableaux NumPy :
 
-- `observations` : `np.ndarray` de forme `(N, 156)`, vecteurs normalisés décrivant l'état de jeu.
+- `observations` : `np.ndarray` de forme `(N, 160)`, vecteurs contenant l'état de jeu (156 valeurs) et l'intention au format one-hot (4 valeurs).
 - `actions` : `np.ndarray` de forme `(N,)`, entiers compris entre `0` et `95`.
 - `rewards` : `np.ndarray` de forme `(N,)`, valeurs flottantes.
 - `dones` : `np.ndarray` de forme `(N,)`, booléens indiquant la fin de partie.
@@ -18,7 +18,7 @@ Chaque fichier `.npz` regroupe plusieurs tableaux NumPy :
 
 | Clé | Forme | Type | Description |
 | --- | --- | --- | --- |
-| `observations` | `(N, 156)` | `float32` | Encodage de l'état de jeu avant chaque coup. Les 156 features sont organisées en trois segments de 52 valeurs représentant respectivement les cartes visibles du tableau, les fondations et les cartes hors tableau (stock, waste, face cachée). Une valeur vaut 1 si la carte est présente dans la zone, 0 sinon. Cet encodage correspond à la fonction `encode_observation` du moteur Rust. |
+| `observations` | `(N, 160)` | `float32` | Vecteur de 160 features composé de l'encodage de l'état de jeu (156 valeurs) concaténé à l'intention sous forme one‑hot (4 valeurs). L'encodage principal correspond à la fonction `encode_observation` du moteur Rust. |
 | `actions` | `(N,)` | `int64` | Indice de l'action jouée, obtenu via `move_index` dans `klondike_core`. Le mapping précis dépend de l'implémentation du moteur. |
 | `rewards` | `(N,)` | `float32` | Récompense immédiate après le coup, calculée par `compute_base_reward_json`. Elle correspond au nombre de cartes placées dans les fondations, normalisé par 52. |
 | `dones` | `(N,)` | `bool` | Indicateur de victoire de l'état résultant. |
@@ -33,7 +33,7 @@ import numpy as np
 
 # Chargement du dataset
 with np.load('data/expert_dataset.npz') as data:
-    observations = data['observations']        # (N, 156)
+    observations = data['observations']        # (N, 160)
     actions = data['actions']                  # (N,)
     rewards = data['rewards']                  # (N,)
     dones = data['dones']                      # (N,)
