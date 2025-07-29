@@ -86,10 +86,13 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     config = load_config()
     parser = argparse.ArgumentParser(description="Evaluate a trained DQN model")
+    default_model = None
+    if hasattr(config, "evaluation") and hasattr(config.evaluation, "model_path"):
+        default_model = config.evaluation.model_path
     parser.add_argument(
         "--model",
         type=str,
-        default=config.model.save_path,
+        default=default_model,
         help="Path to model",
     )
     parser.add_argument(
