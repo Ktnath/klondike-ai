@@ -44,7 +44,7 @@ def evaluate(model_path: str, episodes: int, use_intentions: bool) -> dict:
     intentions = Counter()
 
     for _ in trange(episodes, desc="episodes"):
-        state = env.reset()
+        state, _ = env.reset()  # migrated from gym to gymnasium
         done = False
         ep_reward = 0.0
         move_count = 0
@@ -58,7 +58,8 @@ def evaluate(model_path: str, episodes: int, use_intentions: bool) -> dict:
                 q_valid = q[valid]
                 action = valid[int(torch.argmax(q_valid).item())]
             mv_str = move_from_index(action)
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, terminated, truncated, info = env.step(action)  # migrated from gym to gymnasium
+            done = terminated or truncated
             if use_intentions and mv_str is not None:
                 intent = simplify_intention(
                     _infer_intention(current_state, mv_str, env.state)

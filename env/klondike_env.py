@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import numpy as np
-import gym
+import gymnasium as gym  # migrated from gym to gymnasium
 from typing import Tuple, Dict, Any, List
 
 try:
@@ -95,7 +95,9 @@ class KlondikeEnv(gym.Env):
             obs = np.concatenate([obs, self._intention_to_vec(intention)])
         return obs
 
-    def reset(self, seed: str | None = None) -> np.ndarray:
+    def reset(
+        self, seed: str | None = None, options: dict | None = None
+    ) -> Tuple[np.ndarray, dict]:  # migrated from gym to gymnasium
         """Reset environment and return initial observation.
 
         Parameters
@@ -117,7 +119,9 @@ class KlondikeEnv(gym.Env):
                 self.state = new_game()
         else:
             self.state = new_game()
-        return self._encode_state()
+        obs = self._encode_state()
+        info: dict = {}
+        return obs, info
 
     def _encoded(self, state: str) -> str:
         """Extract the encoded state string from the JSON representation."""
@@ -136,7 +140,9 @@ class KlondikeEnv(gym.Env):
         moves = legal_moves(encoded)
         return [move_index(m) for m in moves]
 
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
+    def step(
+        self, action: int
+    ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:  # migrated from gym to gymnasium
         """Apply an action to the game."""
         assert self.state is not None, "Environment not initialized"
 
@@ -150,9 +156,10 @@ class KlondikeEnv(gym.Env):
             intention = _infer_intention(prev, move, self.state) if self.use_intentions else ""
 
         encoded = self._encoded(self.state)
-        done = bool(is_won(encoded)) or bool(is_lost(encoded))
-        reward = compute_reward(self.state, move or "", done=done)
+        terminated = bool(is_won(encoded)) or bool(is_lost(encoded))
+        truncated = False
+        reward = compute_reward(self.state, move or "", done=terminated)
         info: Dict[str, Any] = {"valid": bool(valid), "intention": intention}
         obs = self._encode_state(intention)
 
-        return obs, reward, done, info
+        return obs, reward, terminated, truncated, info

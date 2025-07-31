@@ -224,7 +224,7 @@ def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     for episode in range(1, episodes + 1):
-        state = env.reset()
+        state, _ = env.reset()  # migrated from gym to gymnasium
         done = False
         states: List[torch.Tensor] = []
         actions: List[int] = []
@@ -234,7 +234,8 @@ def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
                 logits = model(torch.tensor(state, dtype=torch.float32))
                 probs = torch.softmax(logits, dim=0)
             action = int(torch.multinomial(probs, 1).item())
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, terminated, truncated, _ = env.step(action)  # migrated from gym to gymnasium
+            done = terminated or truncated
             states.append(torch.tensor(state, dtype=torch.float32))
             actions.append(action)
             rewards.append(float(reward))

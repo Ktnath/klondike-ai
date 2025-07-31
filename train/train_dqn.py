@@ -493,7 +493,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
 
     loss = torch.tensor(0.0)
     seed = str(random.randint(0, 2**32 - 1))
-    state = env.reset(seed)
+    state, _ = env.reset(seed=seed)  # migrated from gym to gymnasium
     logger.debug("Episode 1 reset with seed %s -> %s", seed, state)
     for episode in range(1, episodes + 1):
         logging.info("Starting episode %d", episode)
@@ -581,7 +581,8 @@ def train(config, *, force_dim_check: bool = False) -> None:
                 action,
             )
             try:
-                next_state, reward, done, info = env.step(action)
+                next_state, reward, terminated, truncated, info = env.step(action)  # migrated from gym to gymnasium
+                done = terminated or truncated
             except Exception as exc:
                 logger.exception(
                     "env.step failed at episode %d step %d: %s",
@@ -774,7 +775,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
             "Finished episode %d with total reward %.2f", episode, episode_reward
         )
         seed = str(random.randint(0, 2**32 - 1))
-        state = env.reset(seed)
+        state, _ = env.reset(seed=seed)  # migrated from gym to gymnasium
         logger.debug(
             "Episode %d reset with seed %s -> %s", episode + 1, seed, state
         )
