@@ -51,7 +51,7 @@ def main() -> None:
     )
     if not valid:
         raise ValueError(f"[ERROR] Dataset invalide : {message}")
-    print(f"[CHECK] ✅ {message}")
+    print(f"[CHECK] {message}")
 
     data = np.load(args.dataset)
     X = data["observations"].astype(np.float32)
