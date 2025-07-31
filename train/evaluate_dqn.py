@@ -54,7 +54,7 @@ def evaluate(
     wins = 0
 
     for _ in range(episodes):
-        state = env.reset()
+        state, _ = env.reset()  # migrated from gym to gymnasium
         done = False
         episode_reward = 0.0
 
@@ -68,7 +68,8 @@ def evaluate(
             else:
                 action = random.choice(valid_actions)
 
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, terminated, truncated, _ = env.step(action)  # migrated from gym to gymnasium
+            done = terminated or truncated
             episode_reward += reward
             state = next_state
 

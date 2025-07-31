@@ -162,7 +162,7 @@ def evaluate_model():
     total_games = 100
 
     for _ in tqdm(range(total_games)):
-        state = env.reset()
+        state, _ = env.reset()  # migrated from gym to gymnasium
         done = False
         moves = 0
         max_moves = 200
@@ -174,7 +174,8 @@ def evaluate_model():
             pi, _ = net.predict(state.tolist())
             pi_valid = np.array([pi[a] for a in valid_actions])
             action = valid_actions[int(np.argmax(pi_valid))]
-            next_state, _, done, _ = env.step(action)
+            next_state, _, terminated, truncated, _ = env.step(action)  # migrated from gym to gymnasium
+            done = terminated or truncated
             state = next_state
             moves += 1
 

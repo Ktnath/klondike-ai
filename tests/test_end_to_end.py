@@ -12,7 +12,7 @@ MAX_STEPS = 20
 
 def test_random_game_runs():
     env = KlondikeEnv()
-    env.reset()
+    env.reset(seed=None)
 
     done = False
     step_count = 0
@@ -20,7 +20,8 @@ def test_random_game_runs():
         actions = env.get_valid_actions()
         assert actions
         action = random.choice(actions)
-        obs, reward, done, info = env.step(action)
+        obs, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
         assert isinstance(obs, np.ndarray)
         assert isinstance(reward, float)
         assert isinstance(done, bool)

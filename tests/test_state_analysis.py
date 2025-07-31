@@ -10,7 +10,7 @@ from env.state_utils import get_hidden_cards, count_empty_columns, extract_found
 
 def test_state_analysis_utils():
     env = KlondikeEnv()
-    env.reset()
+    env.reset(seed=None)
     state_dict = json.loads(env.state)
 
     hidden = get_hidden_cards(state_dict)

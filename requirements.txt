@@ -1,4 +1,4 @@
-gym==0.26.2
+gymnasium==1.2.0  # migrated from gym to gymnasium
 hdbscan==0.8.40
 matplotlib==3.10.3
 numpy==2.3.2

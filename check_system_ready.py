@@ -6,7 +6,7 @@ REQUIRED_MODULES = [
     "klondike_core",
     "torch",
     "yaml",
-    "gym",
+    "gymnasium",  # migrated from gym to gymnasium
 ]
 
 logging.basicConfig(level=logging.INFO)

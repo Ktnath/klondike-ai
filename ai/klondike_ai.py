@@ -112,7 +112,7 @@ class Coach:
         all_examples: List[Tuple[List[float], List[float], float]] = []
 
         for episode in range(1, self.config.num_episodes + 1):
-            obs = self.env.reset()
+            obs, _ = self.env.reset()  # migrated from gym to gymnasium
             done = False
             episode_examples: List[Tuple[List[float], List[float], float]] = []
             moves = 0
@@ -127,7 +127,8 @@ class Coach:
                 pi_valid = np.array([pi[a] for a in valid_actions])
                 action = valid_actions[int(np.argmax(pi_valid))]
 
-                next_obs, reward, done, _ = self.env.step(action)
+                next_obs, reward, terminated, truncated, _ = self.env.step(action)  # migrated from gym to gymnasium
+                done = terminated or truncated
                 episode_examples.append((obs.tolist(), pi, reward))
                 obs = next_obs
                 moves += 1
