@@ -4,115 +4,90 @@ import os
 import random
 from typing import List
 
-
 from tqdm import trange
 import numpy as np
 
 # Automatically patched for modular project structure via bootstrap.py
-from bootstrap import *
+from bootstrap import *  # noqa: F401,F403
 
-from klondike_core import (
-    new_game,
-    play_move,
-    move_index,
-    solve_klondike,
-    shuffle_seed,
-    encode_observation,
-)
+try:  # Prefer compiled extension from local crate
+    from klondike_core import (
+        new_game,
+        play_move,
+        move_index,
+        solve_klondike,
+        shuffle_seed,
+        encode_observation,
+    )
+except Exception:  # pragma: no cover - fallback for old package name
+    from core import new_game, play_move, move_index, solve_klondike, shuffle_seed, encode_observation
+
+from env.klondike_env import KlondikeEnv
+
+
+def _parse_solution(data: list | dict | None) -> List[str]:
+    """Extract move strings from solver output."""
+    if not data:
+        return []
+    if isinstance(data, list):
+        moves = []
+        for item in data:
+            if isinstance(item, list) and item:
+                moves.append(item[0])
+            elif isinstance(item, dict):
+                mv = item.get("move") or item.get("mv") or item.get("action")
+                if mv:
+                    moves.append(mv)
+            else:
+                moves.append(str(item))
+        return moves
+    result = data.get("result", [])
+    if isinstance(result, list):
+        return _parse_solution(result)
+    return []
 
 
 def generate_games(num_games: int, output: str, use_intentions: bool = False) -> None:
-    """Generate expert dataset using the optimal solver.
-
-    Parameters
-    ----------
-    num_games:
-        Number of games to generate.
-    output:
-        Path to output ``.npz`` file.
-    use_intentions:
-        If ``True``, intention one-hot vectors are concatenated to each
-        observation.
-    """
+    """Generate a dataset of optimal moves using the Rust solver."""
     os.makedirs(os.path.dirname(output), exist_ok=True)
 
-    def _intent_vec(label: str | None) -> List[float]:
-        mapping = {
-            "reveal": 0,
-            "foundation": 1,
-            "stack_move": 2,
-            "king_to_empty": 3,
-        }
-        vec = [0.0, 0.0, 0.0, 0.0]
-        if label:
-            key = str(label).strip().lower().replace(" ", "_")
-            for name, idx in mapping.items():
-                if name in key:
-                    vec[idx] = 1.0
-                    break
-        return vec
-
-    observations: List[List[float]] = []
+    observations: List[np.ndarray] = []
     actions: List[int] = []
+    intentions: List[str] = []
 
     for _ in trange(num_games, desc="games"):
         seed = str(shuffle_seed()) if shuffle_seed else str(random.randint(0, 2**32 - 1))
-        state = new_game(seed)
-        solution = json.loads(solve_klondike(state))
-        if isinstance(solution, list):
-            result = [item[0] if isinstance(item, list) and item else item for item in solution]
-            intents = [item[1] if isinstance(item, list) and len(item) > 1 else "" for item in solution]
-        else:
-            result = solution.get("result", [])
-            intents = solution.get("intentions")
-        prev_state = state
+        env = KlondikeEnv(seed=seed, use_intentions=use_intentions)
+        obs, _ = env.reset(seed)
 
-        for idx, item in enumerate(result):
-            if isinstance(item, dict):
-                mv_json = item.get("move") or item.get("mv") or item.get("action")
-                intention = item.get("intention", "")
-            else:
-                mv_json = item
-                if isinstance(intents, list) and idx < len(intents):
-                    intention = intents[idx]
-                else:
-                    intention = ""
+        solution = json.loads(solve_klondike(env.state))
+        moves = _parse_solution(solution)
 
-            obs_vector = np.array(encode_observation(prev_state), dtype=np.float32)
-            action = move_index(mv_json)
-            next_state, _ = play_move(prev_state, mv_json)
+        for mv in moves:
+            observations.append(np.array(obs, dtype=np.float32))
+            act_idx = int(move_index(mv))
+            actions.append(act_idx)
 
-            if use_intentions:
-                intention_vector = np.array(_intent_vec(intention), dtype=np.float32)
-                obs_vector = np.concatenate([obs_vector, intention_vector])
+            obs, _, _, _, info = env.step(act_idx)
+            intentions.append(info.get("intention", ""))
 
-            # Directly append the numpy array to preserve dimensions
-            observations.append(obs_vector)
-            actions.append(int(action))
-
-            prev_state = next_state
-
-    # Stack ensures that all observation vectors have the same length
     obs_array = np.stack(observations)
-    act_array = np.array(actions, dtype=np.int64)
-    np.savez(output, observations=obs_array, actions=act_array)
+    actions_array = np.array(actions, dtype=np.int64)
+    intentions_array = np.array(intentions)
+
+    if actions_array.size > 0 and np.all(actions_array == actions_array[0]):
+        raise ValueError("Dataset contains no action diversity")
+
+    np.savez_compressed(output, observations=obs_array, actions=actions_array, intentions=intentions_array)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate expert dataset")
-    parser.add_argument("--games", type=int, default=100, help="Number of games")
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="data/expert_dataset.npz",
-        help="Output path",
-    )
-    parser.add_argument(
-        "--use_intentions",
-        action="store_true",
-        help="Inclure les intentions dans le dataset .npz",
-    )
+    parser.add_argument("--games", type=int, default=1000, help="Number of games")
+    parser.add_argument("--output", type=str, default="data/expert_dataset.npz", help="Output path")
+    parser.add_argument("--use_intentions", action="store_true", help="Use environment intentions")
     args = parser.parse_args()
+
     generate_games(args.games, args.output, args.use_intentions)
 
 
