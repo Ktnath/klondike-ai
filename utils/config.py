@@ -61,3 +61,21 @@ def load_config(path: str = "config.yaml") -> DotDict:
         logging.warning("Missing 'learning_rate' in training config")
 
     return DotDict(data)
+
+
+def get_input_dim(config: DotDict) -> int:
+    """Return the observation vector dimension based on intentions usage.
+
+    Parameters
+    ----------
+    config:
+        Loaded configuration object.
+
+    Returns
+    -------
+    int
+        Size of the observation vector expected by the models.
+    """
+    base_dim = int(getattr(config.env, "observation_dim", 156))
+    use_int = bool(getattr(config.env, "use_intentions", False))
+    return base_dim + 4 if use_int else base_dim

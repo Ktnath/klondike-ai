@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from intention_utils import group_into_hierarchy
-from utils.config import load_config
+from utils.config import load_config, get_input_dim
 from train.train_dqn import DQN
 
 import numpy as np
@@ -117,9 +117,7 @@ def load_data(
 def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Optional[torch.Tensor] = None) -> None:
     """Train the imitation model and save it."""
     cfg = load_config()
-    base_dim = int(getattr(cfg.env, "observation_dim", 156))
-    use_int = bool(getattr(cfg.env, "use_intentions", False))
-    expected_dim = base_dim + 4 if use_int else base_dim
+    expected_dim = get_input_dim(cfg)
 
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
     if dataset.tensors[0].shape[1] != expected_dim:
@@ -171,9 +169,7 @@ def fine_tune_model(
 ) -> None:
     """Fine tune a pre-trained model on a dataset with a scheduler."""
     cfg = load_config()
-    base_dim = int(getattr(cfg.env, "observation_dim", 156))
-    use_int = bool(getattr(cfg.env, "use_intentions", False))
-    expected_dim = base_dim + 4 if use_int else base_dim
+    expected_dim = get_input_dim(cfg)
 
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
     if dataset.tensors[0].shape[1] != expected_dim:
@@ -262,9 +258,7 @@ def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
 def evaluate(model_path: str, dataset: TensorDataset) -> None:
     """Evaluate a saved model on a dataset."""
     cfg = load_config()
-    base_dim = int(getattr(cfg.env, "observation_dim", 156))
-    use_int = bool(getattr(cfg.env, "use_intentions", False))
-    expected_dim = base_dim + 4 if use_int else base_dim
+    expected_dim = get_input_dim(cfg)
 
     input_dim = dataset.tensors[0].shape[1]
     if input_dim != expected_dim:
@@ -310,9 +304,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     cfg = load_config()
-    base_dim = int(getattr(cfg.env, "observation_dim", 156))
+    expected_dim = get_input_dim(cfg)
     use_int_cfg = bool(getattr(cfg.env, "use_intentions", False))
-    expected_dim = base_dim + 4 if use_int_cfg else base_dim
 
     dataset_path = args.dataset if args.dataset else DEFAULT_DATASET
 

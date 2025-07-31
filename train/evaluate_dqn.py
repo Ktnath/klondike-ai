@@ -19,7 +19,7 @@ from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from train.train_dqn import DQN, DuelingDQN, _load_state_dict_checked
-from utils.config import load_config
+from utils.config import load_config, get_input_dim
 from klondike_core import is_won
 
 
@@ -35,7 +35,7 @@ def evaluate(
         use_int = bool(getattr(config.env, "use_intentions", True))
     env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
-    expected_dim = 156 + 4 if use_int else 156
+    expected_dim = get_input_dim(config) if config else (160 if use_int else 156)
     if input_dim != expected_dim:
         raise ValueError(
             f"Environment should provide {expected_dim}-dim observations, got {input_dim}"
