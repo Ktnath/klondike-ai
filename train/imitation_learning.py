@@ -338,7 +338,7 @@ if __name__ == "__main__":
             )
             if not valid:
                 raise ValueError(f"[ERROR] Dataset invalide : {message}")
-            print(f"[CHECK] ✅ {message}")
+            print(f"[CHECK] {message}")
         X, y, intents = load_data(
             dataset_path, args.use_intentions, args.use_intention_hierarchy
         )

@@ -260,7 +260,7 @@ def train_supervised(
         )
         if not valid:
             raise ValueError(f"[ERROR] Dataset invalide : {message}")
-        print(f"[CHECK] ✅ {message}")
+        print(f"[CHECK] {message}")
     obs_arr, actions_arr, intents_arr = load_dataset(dataset_path)
 
     encoder = None
