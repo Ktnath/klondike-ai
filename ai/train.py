@@ -11,7 +11,7 @@ import shutil
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils.config import load_config
+from utils.config import load_config, get_input_dim
 from self_play_generate import generate_self_play
 from train.train_dqn import DQN, DuelingDQN, load_dataset
 from utils.training import log_epoch_metrics
@@ -113,9 +113,8 @@ def main():
 
     # Initialisation du réseau de neurones
     cfg = load_config()
-    base_dim = getattr(cfg.env, "observation_dim", 156)
+    input_shape = get_input_dim(cfg)
     use_int = getattr(cfg.env, "use_intentions", False)
-    input_shape = base_dim + 4 if use_int else base_dim  # PATCHED for 160-dim with intentions
     action_size = getattr(cfg.env, "action_dim", 96)
     net = NeuralNet(input_shape, action_size)
 
@@ -148,9 +147,8 @@ def main():
 def evaluate_model():
     logging.info("Évaluation du modèle...")
     cfg = load_config()
-    base_dim = getattr(cfg.env, "observation_dim", 156)
+    input_shape = get_input_dim(cfg)
     use_int = getattr(cfg.env, "use_intentions", False)
-    input_shape = base_dim + 4 if use_int else base_dim  # PATCHED for 160-dim with intentions
     action_size = getattr(cfg.env, "action_dim", 96)
     net = NeuralNet(input_shape, action_size)
     net.load_checkpoint("models", "best_model.pth")

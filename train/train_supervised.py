@@ -8,6 +8,8 @@ import sys
 import numpy as np
 import torch
 
+from utils.config import get_input_dim, load_config
+
 # Allow running as standalone script from repository root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -39,14 +41,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    cfg = load_config()
+    expected_dim = get_input_dim(cfg)
+
     data = np.load(args.dataset)
     X = data["observations"].astype(np.float32)
     y = data["actions"].astype(np.int64)
 
-    if args.use_intentions:
-        assert X.shape[1] == 160, f"Expected 160 features (156+4), got {X.shape[1]}"
-    else:
-        assert X.shape[1] == 156, f"Expected 156 features, got {X.shape[1]}"
+    if X.shape[1] != expected_dim:
+        raise ValueError(f"Dataset dimension {X.shape[1]} does not match expected {expected_dim}")
 
     X_tensor = torch.tensor(X, dtype=torch.float32)
     y_tensor = torch.tensor(y, dtype=torch.long)

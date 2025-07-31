@@ -39,7 +39,7 @@ from bootstrap import *
 
 from env.klondike_env import KlondikeEnv
 from env.is_critical_move import is_critical_move
-from utils.config import load_config, get_config_value, DotDict
+from utils.config import load_config, get_config_value, DotDict, get_input_dim
 
 # Path used when saving the final trained model
 DEFAULT_MODEL_PATH = "model.pt"
@@ -286,7 +286,7 @@ def train_supervised(
     loader = torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
     input_dim = X.shape[1]
-    expected_dim = 156 + 4 if use_intentions else 156
+    expected_dim = get_input_dim(config)
     if input_dim != expected_dim:
         raise ValueError(
             f"Input dimension should be {expected_dim}, got {input_dim}"
@@ -353,7 +353,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
     use_int = bool(get_config_value(config, "env.use_intentions", True))
     env = KlondikeEnv(use_intentions=use_int)
     input_dim = env.observation_space.shape[0]
-    expected_dim = 156 + 4 if use_int else 156
+    expected_dim = get_input_dim(config)
     if input_dim != expected_dim:
         raise ValueError(
             f"Environment should provide {expected_dim}-dim observations, got {input_dim}"
@@ -380,6 +380,11 @@ def train(config, *, force_dim_check: bool = False) -> None:
         state = torch.load(pretrained_path, map_location=device)
         first_key = next(iter(policy_net.state_dict()))
         if first_key in state and state[first_key].shape != policy_net.state_dict()[first_key].shape:
+            logging.error(
+                "Pretrained weights dimension %s incompatible with current configuration (%s)",
+                state[first_key].shape,
+                policy_net.state_dict()[first_key].shape,
+            )
             raise ValueError(
                 f"Pretrained model input_dim {state[first_key].shape[1]} does not match expected {policy_net.state_dict()[first_key].shape[1]}"
             )
