@@ -24,6 +24,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from utils.training import log_epoch_metrics
 from env.klondike_env import KlondikeEnv
+from core.validate_dataset import validate_npz_dataset
 
 # Default expert dataset used when no --dataset argument is provided
 DEFAULT_DATASET = os.path.join("data", "expert_dataset.npz")
@@ -330,6 +331,14 @@ if __name__ == "__main__":
         torch.save(model.state_dict(), args.output_path)
         logging.info("Model saved to %s", args.output_path)
     else:
+        if dataset_path.endswith(".npz"):
+            valid, message = validate_npz_dataset(
+                dataset_path,
+                use_intentions=getattr(cfg.env, "use_intentions", False),
+            )
+            if not valid:
+                raise ValueError(f"[ERROR] Dataset invalide : {message}")
+            print(f"[CHECK] ✅ {message}")
         X, y, intents = load_data(
             dataset_path, args.use_intentions, args.use_intention_hierarchy
         )

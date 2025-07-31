@@ -48,6 +48,7 @@ from utils.training import log_epoch_metrics, log_episode
 from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
 from train.intention_embedding import IntentionEncoder
+from core.validate_dataset import validate_npz_dataset
 
 
 class DQN(nn.Module):
@@ -252,6 +253,14 @@ def train_supervised(
 ) -> None:
     """Train the DQN model in a supervised manner from a dataset."""
     config = load_config()
+    if dataset_path.endswith(".npz"):
+        valid, message = validate_npz_dataset(
+            dataset_path,
+            use_intentions=getattr(config.env, "use_intentions", False),
+        )
+        if not valid:
+            raise ValueError(f"[ERROR] Dataset invalide : {message}")
+        print(f"[CHECK] ✅ {message}")
     obs_arr, actions_arr, intents_arr = load_dataset(dataset_path)
 
     encoder = None

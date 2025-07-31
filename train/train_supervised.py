@@ -22,6 +22,7 @@ except Exception as exc:  # pragma: no cover - handle missing module
     ) from exc
 
 from utils.training import log_epoch_metrics
+from core.validate_dataset import validate_npz_dataset
 
 
 DEFAULT_MODEL_PATH = "model.pt"
@@ -43,6 +44,14 @@ def main() -> None:
 
     cfg = load_config()
     expected_dim = get_input_dim(cfg)
+
+    valid, message = validate_npz_dataset(
+        args.dataset,
+        use_intentions=getattr(cfg.env, "use_intentions", False),
+    )
+    if not valid:
+        raise ValueError(f"[ERROR] Dataset invalide : {message}")
+    print(f"[CHECK] ✅ {message}")
 
     data = np.load(args.dataset)
     X = data["observations"].astype(np.float32)
