@@ -2,47 +2,58 @@ import os
 from typing import Tuple
 import numpy as np
 
+_MESSAGES_SUCCESS = {
+    False: "✅ Dataset valide sans intentions",
+    True: "✅ Dataset valide avec intentions",
+}
 
-def validate_npz_dataset(path: str, use_intentions: bool = False) -> Tuple[bool, str]:
-    """Simple validation for an .npz dataset.
+_MESSAGES_FAILURE = {
+    "file": "❌ Fichier introuvable",
+    "load": "❌ Échec de lecture du fichier",
+    "missing_fields": "❌ Champs obligatoires manquants (observations/actions)",
+    "obs_shape": "❌ Shape des observations invalide",
+    "act_shape": "❌ Shape des actions invalide",
+    "int_shape": "❌ Shape des intentions invalide",
+    "int_missing": "❌ Dataset sans intentions alors que requis",
+    "degenerate": "❌ Actions dégénérées (toutes identiques)",
+}
 
-    Parameters
-    ----------
-    path: str
-        Path to the .npz file.
-    use_intentions: bool
-        Whether intention labels are expected.
-
-    Returns
-    -------
-    Tuple[bool, str]
-        ``(True, message)`` if dataset seems valid, ``(False, reason)`` otherwise.
-    """
+def validate_npz_dataset(path: str, use_intentions: bool = False, verbose: bool = True) -> Tuple[bool, str]:
     if not path or not os.path.isfile(path):
-        return False, f"File not found: {path}"
+        return False, _MESSAGES_FAILURE["file"]
+
     try:
         data = np.load(path, allow_pickle=True)
-    except Exception as exc:  # pragma: no cover - fail to load
-        return False, f"Failed to load dataset: {exc}"
+    except Exception as e:
+        return False, f"{_MESSAGES_FAILURE['load']}: {e}"
 
-    required = {"observations", "actions"}
-    missing = required - set(data.files)
-    if missing:
-        return False, f"Missing arrays: {', '.join(sorted(missing))}"
+    if "observations" not in data or "actions" not in data:
+        return False, _MESSAGES_FAILURE["missing_fields"]
 
     obs = data["observations"]
-    acts = data["actions"]
-    if len(obs) != len(acts):
-        return False, "Observations and actions length mismatch"
+    actions = data["actions"]
+    intents = data.get("intentions", None)
+
+    if obs.ndim != 2 or obs.shape[1] not in (156, 160):
+        return False, _MESSAGES_FAILURE["obs_shape"]
+    if actions.ndim != 1 or actions.shape[0] != obs.shape[0]:
+        return False, _MESSAGES_FAILURE["act_shape"]
 
     if use_intentions:
-        if "intentions" in data:
-            intents = data["intentions"]
-        elif "intentions_high" in data:
-            intents = data["intentions_high"]
-        else:
-            return False, "Intentions array missing"
-        if len(intents) != len(obs):
-            return False, "Intentions length mismatch"
+        if intents is None:
+            return False, _MESSAGES_FAILURE["int_missing"]
+        if intents.ndim != 1 or intents.shape[0] != obs.shape[0]:
+            return False, _MESSAGES_FAILURE["int_shape"]
 
-    return True, f"{len(obs)} samples"
+    if actions.size > 0 and np.all(actions == actions[0]):
+        return False, _MESSAGES_FAILURE["degenerate"]
+
+    if verbose:
+        print("🔎 Distribution des actions :")
+        uniq, counts = np.unique(actions, return_counts=True)
+        for u, c in zip(uniq, counts):
+            print(f"  Action {u}: {c} exemples")
+        if intents is not None:
+            print("🧠 Intentions (premières 10):", intents[:10])
+
+    return True, _MESSAGES_SUCCESS[use_intentions]
