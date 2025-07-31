@@ -8,10 +8,17 @@ import sys
 import numpy as np
 import torch
 
-# Allow running as standalone script
+# Allow running as standalone script from repository root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from klondike_ai import NeuralNet
+try:
+    from ai.klondike_ai import NeuralNet
+except Exception as exc:  # pragma: no cover - handle missing module
+    raise ImportError(
+        "Could not import NeuralNet from ai.klondike_ai. Make sure the file"
+        " ai/klondike_ai.py exists and is on the PYTHONPATH"
+    ) from exc
+
 from utils.training import log_epoch_metrics
 
 
@@ -49,7 +56,7 @@ def main() -> None:
 
     input_dim = X.shape[1]
     action_dim = int(y_tensor.max().item()) + 1
-    model = NeuralNet(input_dim=input_dim, action_size=action_dim)
+    model = NeuralNet(input_shape=input_dim, action_size=action_dim)
     optimizer = torch.optim.Adam(model.model.parameters(), lr=1e-3)
     criterion = torch.nn.NLLLoss()
 
