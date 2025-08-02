@@ -1,16 +1,37 @@
-import importlib.util
-from pathlib import Path
-import sysconfig
+# 📄 FICHIER : tests/test_move_index.py
+# ✅ OBJECTIF : Vérifier que move_index_py et move_from_index_py assurent un mapping fiable des coups
 
+import pytest
+from klondike_core import move_index_py, move_from_index_py
 
-def test_move_index_roundtrip():
-    root = Path(__file__).resolve().parents[1]
-    suffix = sysconfig.get_config_var("EXT_SUFFIX")
-    so_path = root / ".venv" / "lib" / f"python{sysconfig.get_python_version()}" / "site-packages" / "klondike_core" / f"klondike_core{suffix}"
-    spec = importlib.util.spec_from_file_location("klondike_core", so_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+# Liste de quelques coups valides représentatifs
+valid_moves = [
+    "DS 0", "DS 12",       # moves vers les fondations
+    "DP 8", "DP 25",       # stack move
+    "R 4", "R 31",         # draw from stock
+    "PS 0", "PS 11",       # foundation to tableau
+    "SP 12", "SP 27",      # king to empty
+]
 
-    idx = module.move_index("DS 0")
-    assert idx != -1
-    assert module.move_from_index(idx) == "DS 0"
+# 🧪 Test que chaque coup valide retourne un index ≥ 0
+@pytest.mark.parametrize("move", valid_moves)
+def test_move_index_is_valid(move):
+    idx = move_index_py(move)
+    assert isinstance(idx, int)
+    assert idx >= 0, f"Move '{move}' returned invalid index {idx}"
+
+# 🧪 Test que le round-trip move → index → move est stable
+@pytest.mark.parametrize("move", valid_moves)
+def test_move_round_trip(move):
+    idx = move_index_py(move)
+    recovered = move_from_index_py(idx)
+    assert recovered == move, f"Round-trip failed: {move} → {idx} → {recovered}"
+
+# 🧪 Test d’un coup invalide
+def test_invalid_move_returns_minus1():
+    assert move_index_py("INVALID") == -1
+
+# 🧪 Test d’un index invalide
+def test_invalid_index_returns_none():
+    assert move_from_index_py(-42) is None
+    assert move_from_index_py(9999) is None
