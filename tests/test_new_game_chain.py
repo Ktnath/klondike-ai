@@ -1,4 +1,4 @@
-"""Integration test chaining new_game → legal_moves → solve_klondike."""
+"""Simple integration test chaining new_game → legal_moves → solve_klondike."""
 
 import json
 import pytest
@@ -19,4 +19,3 @@ def test_new_game_legal_moves_solve_chain():
 
     solution = kc.solve_klondike(state)
     assert isinstance(solution, list)
-
