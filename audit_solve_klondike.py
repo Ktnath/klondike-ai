@@ -29,6 +29,9 @@ def audit_solve_klondike():
                     break
 
                 idx = move_index(move)
+                if idx == -1:
+                    print(f"⚠️ move_index invalide pour le move : {move}")
+                    errors += 1
                 all_actions.append(idx)
                 all_intentions.append(intention)
 
