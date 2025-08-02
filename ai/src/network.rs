@@ -31,15 +31,29 @@ impl NeuralNet {
     pub fn train(&mut self, examples: Vec<(Vec<f32>, Vec<f32>, f32)>) -> PyResult<()> {
         Python::with_gil(|py| {
             let torch = py.import("torch")?;
+            let nnf = py.import("torch.nn.functional")?;
 
-            for (board, _pi, _v) in examples {
+            for (epoch, (board, pi, v)) in examples.into_iter().enumerate() {
                 let board_tensor = torch.call_method1("tensor", (board,))?;
+                let target_pi = torch.call_method1("tensor", (pi,))?;
+                let target_v = torch.call_method1("tensor", (vec![v],))?;
 
-                // Placeholder training step - to be implemented
-                let _ = self.model.call_method1(py, "forward", (board_tensor,))?;
                 self.optimizer.call_method0(py, "zero_grad")?;
-                // TODO: compute loss and call backward
+
+                let (pred_pi, pred_v) = self
+                    .model
+                    .call_method1(py, "forward", (board_tensor,))?
+                    .extract::<(PyObject, PyObject)>(py)?;
+
+                let policy_loss = nnf.call_method1("mse_loss", (pred_pi, target_pi))?;
+                let value_loss = nnf.call_method1("mse_loss", (pred_v, target_v))?;
+                let total_loss = policy_loss.call_method1("add", (value_loss,))?;
+                let loss_value: f32 = total_loss.call_method0("item")?.extract()?;
+
+                total_loss.call_method0("backward")?;
                 self.optimizer.call_method0(py, "step")?;
+
+                println!("Epoch {} - Loss: {}", epoch + 1, loss_value);
             }
 
             Ok(())
@@ -68,7 +82,17 @@ impl NeuralNet {
             let torch = py.import("torch")?;
             let path = Path::new(folder).join(filename);
 
-            let state = py.eval("{ 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict() }", Some([("model", self.model.as_ref(py)), ("optimizer", self.optimizer.as_ref(py))].into_py_dict(py)), None)?;
+            let state = py.eval(
+                "{ 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict() }",
+                Some(
+                    [
+                        ("model", self.model.as_ref(py)),
+                        ("optimizer", self.optimizer.as_ref(py)),
+                    ]
+                    .into_py_dict(py),
+                ),
+                None,
+            )?;
 
             torch.call_method1("save", (state, path.to_str().unwrap()))?;
 
@@ -82,8 +106,16 @@ impl NeuralNet {
             let path = Path::new(folder).join(filename);
 
             let checkpoint = torch.call_method1("load", (path.to_str().unwrap(),))?;
-            self.model.call_method1(py, "load_state_dict", (checkpoint.get_item("state_dict")?,))?;
-            self.optimizer.call_method1(py, "load_state_dict", (checkpoint.get_item("optimizer")?,))?;
+            self.model.call_method1(
+                py,
+                "load_state_dict",
+                (checkpoint.get_item("state_dict")?,),
+            )?;
+            self.optimizer.call_method1(
+                py,
+                "load_state_dict",
+                (checkpoint.get_item("optimizer")?,),
+            )?;
 
             Ok(())
         })
