@@ -79,7 +79,7 @@ impl Pruner for FullPruner {
             let mut filter = match (self.last_move, &self.last_extra) {
                 // Moving the top layer card and leave the pile empty
                 // => Must move another king to fill the empty spot, otherwise it doesn't make sense
-                (Move::Reveal(_), ExtraInfo::RevealEmpty) => MoveMask {
+                (Move::Reveal(_) | Move::PileStack(_), ExtraInfo::RevealEmpty) => MoveMask {
                     pile_stack: !0,
                     deck_stack: !0,
                     stack_pile: !KING_MASK,
@@ -87,7 +87,7 @@ impl Pruner for FullPruner {
                     reveal: !KING_MASK,
                 },
 
-                (Move::Reveal(_), &ExtraInfo::Card(c)) => {
+                (Move::Reveal(_) | Move::PileStack(_), &ExtraInfo::Card(c)) => {
                     let m = c.mask();
                     let other = c.swap_suit().mask();
                     let mm = m | other;
@@ -100,7 +100,6 @@ impl Pruner for FullPruner {
                         reveal: 0,
                     }
                 }
-                // TODO: another case of stack and reveal without dominances
                 _ => MoveMask::default(),
             };
 

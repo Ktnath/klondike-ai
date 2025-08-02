@@ -1,12 +1,10 @@
-use serde_json::Value;
-use klondike_core::{solve_klondike, new_game, move_from_index, move_index, Move};
+use klondike_core::{move_from_index, move_index, new_game, solve_klondike};
 
 #[test]
-fn test_solver_returns_json() {
+fn test_solver_returns_vector() {
     let state = new_game(None).unwrap();
     let out = solve_klondike(&state).unwrap();
-    let v: Value = serde_json::from_str(&out).unwrap();
-    assert!(v.is_array() || v.is_null());
+    assert!(out.iter().all(|(m, i)| !m.is_empty() && !i.is_empty()));
 }
 
 #[test]
