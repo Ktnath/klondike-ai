@@ -47,18 +47,22 @@ les actions autorisées après chaque mouvement. `Move` fournit une indexation s
 ## API PyO3
 L'extension compilée expose les fonctions suivantes :
 
-| Fonction                | Description | Entrées / Sorties |
-|-------------------------|-------------|------------------|
-| `new_game()`            | Crée une nouvelle partie et renvoie son état sérialisé en JSON. | `()` -> `str` |
-| `legal_moves(state)`    | Renvoie la liste des coups légaux à partir d'un état JSON. | `str` -> `Vec[str]` |
-| `play_move(state, mv)`  | Applique un coup à l'état fourni, renvoie le nouvel état JSON et un booléen indiquant la validité. | `(str, str)` -> `(str, bool)` |
-| `encode_observation(state)` | Encode l'état sous forme de vecteur `f32` (format utilisé par l'apprentissage). | `str` -> `Vec[f32]` |
-| `foundation_count(state)` | Nombre total de cartes déjà placées dans les fondations. | `str` -> `usize` |
-| `is_won(state)`         | Indique si la partie est gagnée. | `str` -> `bool` |
-| `move_index(mv)`        | Convertit un coup (JSON) en indice entier [0‑95]. | `str` -> `usize` |
-| `move_from_index(idx)`  | Opération inverse, renvoie le coup correspondant à l'indice ou `None`. | `usize` -> `Option[str]` |
-| `move_to_index(mv)`     | Encode un coup arbitraire vers un index unique. | `str` -> `usize` |
-| `index_to_move(idx)`    | Décodage inverse de l'indice vers la chaîne du coup. | `usize` -> `str` |
+| Fonction | Description | Entrées / Sorties |
+|----------|-------------|------------------|
+| `new_game(seed=None)` | Crée une nouvelle partie et renvoie son état sérialisé en JSON. | `Optional[str]` -> `str` |
+| `legal_moves(state)` | Renvoie la liste des coups légaux à partir d'un état JSON. | `str` -> `List[str]` |
+| `play_move(state, mv)` | Applique un coup à l'état fourni, renvoie le nouvel état JSON et un booléen indiquant la validité. | `(str, str)` -> `(str, bool)` |
+| `compute_base_reward_json(state)` | Calcule la récompense de base pour un état donné. | `str` -> `float` |
+| `shuffle_seed()` | Renvoie le seed utilisé par le mélangeur. | `()` -> `int` |
+| `solve_klondike(state)` | Tente de résoudre la partie et renvoie une liste de couples `(coup, intention)`. | `str` -> `List[Tuple[str, str]]` |
+| `encode_observation(state)` | Encode l'état sous forme de vecteur `f32` (format utilisé par l'apprentissage). | `str` -> `List[float]` |
+| `is_won(state)` | Indique si la partie est gagnée. | `str` -> `bool` |
+| `is_lost(state)` | Indique si la partie est perdue. | `str` -> `bool` |
+| `move_index(mv)` | Convertit un coup (JSON) en indice entier [0‑95]. | `str` -> `int` |
+| `move_from_index(idx)` | Opération inverse, renvoie le coup correspondant à l'indice ou `None`. | `int` -> `Optional[str]` |
+| `move_index_py(mv)` | Version Python pure de `move_index`. | `str` -> `int` |
+| `move_from_index_py(idx)` | Version Python pure de `move_from_index`. | `int` -> `Optional[str]` |
+| `infer_intention(before, move, after)` | Déduit l'intention associée à un coup. | `(str, str, str)` -> `str` |
 
 Tous les états de jeu et coups sont échangés sous forme de chaînes JSON. Ceci
 permet d'interfacer facilement le moteur avec d'autres langages ou de stocker des
