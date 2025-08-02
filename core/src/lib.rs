@@ -417,8 +417,7 @@ fn count_empty_columns(v: &Value) -> usize {
     v.get("tableau")
         .and_then(|t| t.as_array())
         .map(|cols| {
-            cols
-                .iter()
+            cols.iter()
                 .filter(|col| {
                     if let Some(obj) = col.as_object() {
                         let cards = obj
@@ -426,10 +425,7 @@ fn count_empty_columns(v: &Value) -> usize {
                             .and_then(|c| c.as_array())
                             .map(|a| a.len())
                             .unwrap_or(0);
-                        let down = obj
-                            .get("face_down")
-                            .and_then(|d| d.as_u64())
-                            .unwrap_or(0);
+                        let down = obj.get("face_down").and_then(|d| d.as_u64()).unwrap_or(0);
                         cards == 0 && down == 0
                     } else if let Some(arr) = col.as_array() {
                         arr.is_empty()
@@ -478,13 +474,20 @@ pub fn infer_intention(before: &str, mv: &str, after: &str) -> &'static str {
 }
 
 #[pyfunction(name = "move_index")]
-pub fn move_index_py(_mv: &str) -> PyResult<usize> {
-    Ok(0)
+pub fn move_index_py(mv: &str) -> i32 {
+    match move_to_index(mv) {
+        Ok(idx) => idx as i32,
+        Err(_) => -1,
+    }
 }
 
 #[pyfunction(name = "move_from_index")]
-pub fn move_from_index_py(_idx: usize) -> PyResult<Option<String>> {
-    Ok(None)
+pub fn move_from_index_py(idx: i32) -> Option<String> {
+    if idx < 0 {
+        None
+    } else {
+        index_to_move(idx as usize).ok()
+    }
 }
 
 /// Convert a move string like "DP 10" to a stable numeric index.
@@ -521,15 +524,14 @@ pub fn index_to_move(idx: usize) -> PyResult<String> {
 
 #[pyfunction]
 pub fn solve_klondike(state_json: &str) -> PyResult<Vec<(String, String)>> {
-    let v: Value = serde_json::from_str(state_json)
-        .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let v: Value =
+        serde_json::from_str(state_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
     let encoded = v
         .get("encoded")
         .and_then(|e| e.as_str())
         .ok_or_else(|| PyValueError::new_err("missing encoded"))?;
 
-    let mut state = decode_state(encoded)
-        .ok_or_else(|| PyValueError::new_err("invalid state"))?;
+    let mut state = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
 
     let (status, history) =
         solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
