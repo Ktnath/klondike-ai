@@ -125,7 +125,8 @@ impl Solitaire {
     #[must_use]
     const fn get_bottom_mask(&self) -> u64 {
         let vis = self.get_visible_mask();
-        let free = vis & !self.get_locked_mask(); //maybe no need to & TODO: check later
+        let locked = self.get_locked_mask();
+        let free = vis & !locked;
         let xor_all = {
             let xor_free = free ^ (free >> 1);
             let xor_vis = vis ^ (vis >> 1);
@@ -498,7 +499,6 @@ impl Solitaire {
 
     #[must_use]
     pub fn compute_visible_piles(&self) -> [PileVec; N_PILES as usize] {
-        // TODO: should add more comprehensive test for this
         let non_top = !self.get_locked_mask() & self.get_visible_mask();
         let mut king_suit = 0;
         core::array::from_fn(|pos| {
@@ -549,8 +549,7 @@ impl Solitaire {
     }
 
     #[must_use]
-    pub(crate) fn is_valid(&self) -> bool {
-        // TODO: test for if visible mask and free mask make sense to build bottom mask
+    pub fn is_valid(&self) -> bool {
         if self.get_extended_top_mask().count_ones() > N_PILES.into() {
             return false;
         }
