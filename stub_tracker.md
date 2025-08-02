@@ -11,7 +11,7 @@ This document tracks functions previously implemented as stubs. Check off items 
 - [ ] klondike_core.py: encode_state_to_json
 - [ ] klondike_core.py: move_index
 - [ ] klondike_core.py: move_from_index
-- [ ] klondike_core.py: shuffle_seed
+- [x] klondike_core.py: shuffle_seed
 - [ ] klondike_core.py: solve_klondike
 - [ ] klondike_core.py: encode_observation
 - [ ] klondike_core.py: is_won

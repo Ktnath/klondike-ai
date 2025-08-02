@@ -40,6 +40,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::*;
 use rand::rngs::SmallRng;
+use rand::Rng;
 use rand::SeedableRng;
 use serde_json::Value;
 
@@ -568,7 +569,20 @@ pub fn solve_klondike_legacy(state_json: &str) -> PyResult<String> {
 
 #[pyfunction]
 pub fn shuffle_seed() -> PyResult<u64> {
-    Ok(0)
+    if let Ok(seed) = std::env::var("SHUFFLE_SEED") {
+        let parsed = seed
+            .parse::<u64>()
+            .map_err(|_| PyValueError::new_err("invalid SHUFFLE_SEED"))?;
+        Ok(parsed)
+    } else {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .as_nanos() as u64;
+        let mut rng = SmallRng::seed_from_u64(nanos);
+        Ok(rng.random::<u64>())
+    }
 }
 
 #[pymodule]
