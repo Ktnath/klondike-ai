@@ -38,6 +38,7 @@ use crate::tracking::{DefaultTerminateSignal, EmptySearchStats};
 use core::num::NonZeroU8;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::*;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use serde_json::Value;
@@ -557,6 +558,13 @@ pub fn solve_klondike(state_json: &str) -> PyResult<Vec<(String, String)>> {
 }
 
 #[pyfunction]
+pub fn solve_klondike_legacy(state_json: &str) -> PyResult<String> {
+    let res = solve_klondike(state_json)?;
+    let opt = if res.is_empty() { None } else { Some(res) };
+    serde_json::to_string(&opt).map_err(|e| PyValueError::new_err(e.to_string()))
+}
+
+#[pyfunction]
 pub fn shuffle_seed() -> PyResult<u64> {
     Ok(0)
 }
@@ -576,6 +584,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(index_to_move, m)?)?;
     m.add_function(wrap_pyfunction!(infer_intention, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
+    m.add_function(wrap_pyfunction!(solve_klondike_legacy, m)?)?;
     m.add_function(wrap_pyfunction!(shuffle_seed, m)?)?;
     m.add_function(wrap_pyfunction!(encode_state_to_json, m)?)?;
     m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
