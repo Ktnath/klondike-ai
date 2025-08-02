@@ -1,42 +1,118 @@
-import json
-from typing import List, Tuple, Optional
+"""Python wrapper for the Rust ``klondike_core`` extension.
+
+This module attempts to load the compiled Rust extension of the same name
+from the Python path.  If the extension cannot be found the exposed
+functions raise :class:`NotImplementedError` to signal that the engine is
+not available.
+
+The pure-Python helpers ``move_index_py`` and ``move_from_index_py`` are
+kept for convenience and testing purposes.
+"""
+
+from __future__ import annotations
+
+from typing import List, Optional, Tuple
+
+import importlib
+import os
+import sys
 
 
-def new_game() -> str:
-    """Return a minimal dummy game state as JSON string."""
-    state = {"encoded": [0, 1, 2], "moves": ["m1", "m2"], "step": 0}
-    return json.dumps(state)
+def _load_rust_module():
+    """Load the real ``klondike_core`` extension if it exists on ``sys.path``.
+
+    The current directory (which contains this shim) is temporarily removed
+    from ``sys.path`` so that Python can discover an actual compiled module
+    with the same name elsewhere (typically in ``site-packages``).
+    """
+
+    module_name = "klondike_core"
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    original_path = list(sys.path)
+    original_module = sys.modules.get(module_name)
+
+    try:
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+        sys.path = [
+            p
+            for p in sys.path
+            if os.path.abspath(p or ".") != current_dir
+        ]
+        return importlib.import_module(module_name)
+    except Exception:
+        return None
+    finally:
+        sys.path[:] = original_path
+        if original_module is not None:
+            sys.modules[module_name] = original_module
 
 
-def legal_moves(encoded) -> List[str]:
-    """Return a list of possible moves for the encoded state."""
-    return ["m1", "m2"]
+_core = _load_rust_module()
+
+
+def _missing(*_args, **_kwargs):  # pragma: no cover - defensive utility
+    raise NotImplementedError(
+        "Rust extension 'klondike_core' is required for this function"
+    )
+
+
+def new_game(seed: Optional[str] = None) -> str:
+    """Create a new game and return its JSON representation."""
+
+    if _core is None:
+        _missing()
+    if seed is not None:
+        return _core.new_game(seed)
+    return _core.new_game()
+
+
+def legal_moves(encoded: str) -> List[str]:
+    """Return the list of legal moves for an encoded state."""
+
+    if _core is None:
+        _missing()
+    return _core.legal_moves(encoded)
 
 
 def play_move(state_json: str, move: str) -> Tuple[str, bool]:
-    """Pretend to play a move and return new state and whether game is done."""
-    state = json.loads(state_json)
-    state["step"] += 1
-    done = state["step"] >= 2
-    state["moves"] = [] if done else ["m1", "m2"]
-    return json.dumps(state), done
+    """Apply ``move`` on ``state_json`` and return the next state and validity."""
+
+    if _core is None:
+        _missing()
+    return _core.play_move(state_json, move)
 
 
 def compute_base_reward_json(state_json: str) -> float:
-    """Return a dummy reward."""
-    return 0.5
+    """Compute the base reward for ``state_json``."""
+
+    if _core is None:
+        _missing()
+    return float(_core.compute_base_reward_json(state_json))
 
 
-def encode_state_to_json(encoded) -> str:
-    return json.dumps({"encoded": encoded})
+def encode_state_to_json(encoded: str) -> str:
+    """Return the JSON representation of an encoded state."""
+
+    if _core is None:
+        _missing()
+    return _core.encode_state_to_json(encoded)
 
 
 def move_index(move: str) -> int:
-    return 0
+    """Return a stable numeric index for ``move``."""
+
+    if _core is None:
+        _missing()
+    return int(_core.move_index(move))
 
 
 def move_from_index(index: int) -> Optional[str]:
-    return "m1" if index == 0 else None
+    """Recover the move string from its numeric ``index``."""
+
+    if _core is None:
+        _missing()
+    return _core.move_from_index(index)
 
 
 # --- Move ↔ index helpers -------------------------------------------------
@@ -44,25 +120,20 @@ def move_from_index(index: int) -> Optional[str]:
 # Mapping offsets for each move type. Each move is represented by a type
 # string followed by a card index (0-51). The overall index space reserves
 # 52 contiguous slots for every move type in order to provide a stable
-# bijection between move strings and numeric indices.
+# bijection between move strings and numeric indices.  These helpers are kept
+# as pure Python utilities used in tests.
 _MOVE_TYPE_OFFSETS = {
     "DS": 0 * 52,  # Deck → Stack (foundation)
     "PS": 1 * 52,  # Pile → Stack (foundation)
     "DP": 2 * 52,  # Deck → Pile (tableau)
     "SP": 3 * 52,  # Stack → Pile (tableau)
-    "R": 4 * 52,   # Reveal from stock
+    "R": 4 * 52,  # Reveal from stock
 }
 _TOTAL_MOVES = 5 * 52
 
 
 def move_index_py(move: str) -> int:
-    """Return the stable index of ``move`` or ``-1`` if invalid.
-
-    ``move`` must have the form ``"TYPE idx"`` where ``TYPE`` is one of the
-    keys in ``_MOVE_TYPE_OFFSETS`` and ``idx`` is a card index in ``0..51``.
-    The resulting index encodes the move type and the card in a single
-    integer value.
-    """
+    """Return the stable index of ``move`` or ``-1`` if invalid."""
 
     try:
         mv_type, idx_str = move.split()
@@ -90,23 +161,71 @@ def move_from_index_py(index: int) -> Optional[str]:
 
 
 def shuffle_seed() -> int:
-    return 42
+    """Return the seed used by the shuffler."""
+
+    if _core is None:
+        _missing()
+    return int(_core.shuffle_seed())
 
 
 def solve_klondike(state_json: str) -> List[Tuple[str, str]]:
-    """Return a dummy solution consisting of one move with an intention."""
-    return [("m1", "reveal")]
+    """Solve the game described by ``state_json``.
+
+    The result is a list of ``(move, intention)`` tuples.
+    """
+
+    if _core is None:
+        _missing()
+    return _core.solve_klondike(state_json)
 
 
-def encode_observation(state_json: str):
-    """Return a dummy observation array."""
-    return [0, 1, 2]
+def encode_observation(state_json: str) -> List[float]:
+    """Encode ``state_json`` into an observation vector."""
+
+    if _core is None:
+        _missing()
+    return _core.encode_observation(state_json)
+
 
 def is_won(state_json: str) -> bool:
-    return False
+    """Return ``True`` if the game is won."""
+
+    if _core is None:
+        _missing()
+    return bool(_core.is_won(state_json))
+
 
 def is_lost(state_json: str) -> bool:
-    return False
+    """Return ``True`` if the game is lost."""
 
-def infer_intention(move: str) -> str:
-    return "reveal"
+    if _core is None:
+        _missing()
+    return bool(_core.is_lost(state_json))
+
+
+def infer_intention(before: str, move: str, after: str) -> str:
+    """Infer the intention of ``move`` using ``before`` and ``after`` states."""
+
+    if _core is None:
+        _missing()
+    return _core.infer_intention(before, move, after)
+
+
+__all__ = [
+    "new_game",
+    "legal_moves",
+    "play_move",
+    "compute_base_reward_json",
+    "encode_state_to_json",
+    "move_index",
+    "move_from_index",
+    "move_index_py",
+    "move_from_index_py",
+    "shuffle_seed",
+    "solve_klondike",
+    "encode_observation",
+    "is_won",
+    "is_lost",
+    "infer_intention",
+]
+
