@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from klondike_core import solve_klondike, encode_observation, move_index
+from klondike_core import solve_klondike, encode_observation, move_index, new_game
 
 N = 10  # Nombre de parties à tester
 
@@ -14,7 +14,8 @@ def audit_solve_klondike():
 
     for i in range(N):
         try:
-            result = solve_klondike()
+            state = new_game()
+            result = solve_klondike(state)
             if not isinstance(result, list):
                 print(f"❌ Partie {i+1}: format inattendu")
                 errors += 1
@@ -28,6 +29,9 @@ def audit_solve_klondike():
                     break
 
                 idx = move_index(move)
+                if idx == -1:
+                    print(f"⚠️ move_index invalide pour le move : {move}")
+                    errors += 1
                 all_actions.append(idx)
                 all_intentions.append(intention)
 
