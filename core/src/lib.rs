@@ -395,6 +395,87 @@ pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
     Ok(count as f32 / 52.0)
 }
 
+fn foundation_total(v: &Value) -> usize {
+    v.get("foundations")
+        .and_then(|f| f.as_array())
+        .map(|arr| {
+            arr.iter()
+                .map(|stack| {
+                    stack
+                        .as_array()
+                        .map(|a| a.len())
+                        .or_else(|| stack.as_u64().map(|n| n as usize))
+                        .unwrap_or(0)
+                })
+                .sum()
+        })
+        .unwrap_or(0)
+}
+
+fn count_empty_columns(v: &Value) -> usize {
+    v.get("tableau")
+        .and_then(|t| t.as_array())
+        .map(|cols| {
+            cols
+                .iter()
+                .filter(|col| {
+                    if let Some(obj) = col.as_object() {
+                        let cards = obj
+                            .get("cards")
+                            .and_then(|c| c.as_array())
+                            .map(|a| a.len())
+                            .unwrap_or(0);
+                        let down = obj
+                            .get("face_down")
+                            .and_then(|d| d.as_u64())
+                            .unwrap_or(0);
+                        cards == 0 && down == 0
+                    } else if let Some(arr) = col.as_array() {
+                        arr.is_empty()
+                    } else {
+                        false
+                    }
+                })
+                .count()
+        })
+        .unwrap_or(0)
+}
+
+#[pyfunction]
+pub fn infer_intention(before: &str, mv: &str, after: &str) -> &'static str {
+    let before_v: Value = match serde_json::from_str(before) {
+        Ok(v) => v,
+        Err(_) => return "",
+    };
+    let after_v: Value = match serde_json::from_str(after) {
+        Ok(v) => v,
+        Err(_) => return "",
+    };
+
+    if mv.starts_with('R') {
+        return "reveal";
+    }
+
+    if foundation_total(&after_v) > foundation_total(&before_v) {
+        return "foundation";
+    }
+
+    let mut parts = mv.split_whitespace();
+    let mv_type = parts.next().unwrap_or("");
+    let idx: i32 = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+
+    if mv_type == "DP" || mv_type == "SP" {
+        if idx / 4 == 12 && count_empty_columns(&before_v) > count_empty_columns(&after_v) {
+            return "king_to_empty";
+        }
+        return "stack_move";
+    }
+    if mv_type == "DS" || mv_type == "PS" {
+        return "foundation";
+    }
+    "stack_move"
+}
+
 #[pyfunction(name = "move_index")]
 pub fn move_index_py(_mv: &str) -> PyResult<usize> {
     Ok(0)
@@ -438,35 +519,41 @@ pub fn index_to_move(idx: usize) -> PyResult<String> {
 }
 
 #[pyfunction]
-pub fn solve_klondike(state_json: &str) -> PyResult<String> {
-    let res: Option<Vec<(String, String, String)>> = (|| {
-        let v: Value = serde_json::from_str(state_json).ok()?;
-        let encoded = v.get("encoded")?.as_str()?;
-        let mut state = decode_state(encoded)?;
+pub fn solve_klondike(state_json: &str) -> PyResult<Vec<(String, String)>> {
+    let v: Value = serde_json::from_str(state_json)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let encoded = v
+        .get("encoded")
+        .and_then(|e| e.as_str())
+        .ok_or_else(|| PyValueError::new_err("missing encoded"))?;
 
-        let (status, history) =
-            solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
+    let mut state = decode_state(encoded)
+        .ok_or_else(|| PyValueError::new_err("invalid state"))?;
 
-        if status == SearchResult::Solved {
-            let (_, labeled) = history?;
-            Some(
-                labeled
-                    .iter()
-                    .map(|lm| {
-                        (
-                            move_to_string(lm.mv),
-                            lm.intention.clone(),
-                            lm.high_level.to_string(),
-                        )
-                    })
-                    .collect(),
-            )
-        } else {
-            None
-        }
-    })();
+    let (status, history) =
+        solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
 
-    serde_json::to_string(&res).map_err(|e| PyValueError::new_err(e.to_string()))
+    if status != SearchResult::Solved {
+        return Ok(Vec::new());
+    }
+
+    let (hist, _labeled) = history.ok_or_else(|| PyValueError::new_err("no history"))?;
+
+    let mut game = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
+    let mut before_json = encode_state_to_json(encoded)?;
+    let mut res: Vec<(String, String)> = Vec::new();
+
+    for mv in hist.iter() {
+        game.do_move(*mv);
+        let after_encoded = encode_state(&game);
+        let after_json = encode_state_to_json(&after_encoded)?;
+        let mv_str = move_to_string(*mv);
+        let intent = infer_intention(&before_json, &mv_str, &after_json);
+        res.push((mv_str, intent.to_string()));
+        before_json = after_json;
+    }
+
+    Ok(res)
 }
 
 #[pyfunction]
@@ -487,6 +574,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(move_from_index_py, m)?)?;
     m.add_function(wrap_pyfunction!(move_to_index, m)?)?;
     m.add_function(wrap_pyfunction!(index_to_move, m)?)?;
+    m.add_function(wrap_pyfunction!(infer_intention, m)?)?;
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
     m.add_function(wrap_pyfunction!(shuffle_seed, m)?)?;
     m.add_function(wrap_pyfunction!(encode_state_to_json, m)?)?;
