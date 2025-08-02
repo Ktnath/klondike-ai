@@ -1,0 +1,48 @@
+(venv) PS D:\klondike-ai> cd core
+(venv) PS D:\klondike-ai\core> Get-ChildItem -Recurse
+
+    Directory: D:\klondike-ai\core
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           7/31/2025 12:35 PM                src
+d----           7/31/2025 12:35 PM                tests
+-a---           7/31/2025 12:35 PM            535 Cargo.toml
+-a---           7/31/2025 12:35 PM            352 pyproject.toml
+-a---           7/31/2025 12:35 PM           4785 README_core.md
+-a---           7/31/2025 12:35 PM           2236 validate_dataset.py
+
+    Directory: D:\klondike-ai\core\src
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:35 PM          11032 analysis.rs
+-a---           7/31/2025 12:35 PM           3115 card.rs
+-a---           7/31/2025 12:35 PM           5288 convert.rs
+-a---           7/31/2025 12:35 PM          11380 deck.rs
+-a---           7/31/2025 12:35 PM           2961 engine.rs
+-a---           7/31/2025 12:35 PM           1095 formatter.rs
+-a---           7/31/2025 12:35 PM           2572 game_theory.rs
+-a---           7/31/2025 12:35 PM           9100 hidden.rs
+-a---           7/31/2025 12:35 PM           3175 intentions.rs
+-a---           7/31/2025 12:35 PM          22374 legacy.rs
+-a---           7/31/2025 12:35 PM          18959 lib.rs
+-a---           7/31/2025 12:35 PM           4554 mcts_solver.rs
+-a---           7/31/2025 12:35 PM           4685 moves.rs
+-a---           7/31/2025 12:35 PM           9376 partial.rs
+-a---           7/31/2025 12:35 PM           4260 pruning.rs
+-a---           7/31/2025 12:35 PM           9307 shuffler.rs
+-a---           7/31/2025 12:35 PM           2103 stack.rs
+-a---           7/31/2025 12:35 PM           8760 standard.rs
+-a---           7/31/2025 12:35 PM          26766 state.rs
+-a---           7/31/2025 12:35 PM            609 tracking.rs
+-a---           7/31/2025 12:35 PM           3055 traverse.rs
+-a---           7/31/2025 12:35 PM           1049 utils.rs
+
+    Directory: D:\klondike-ai\core\tests
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:35 PM           1108 solver.rs
+
+(venv) PS D:\klondike-ai\core>

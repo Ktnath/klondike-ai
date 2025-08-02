@@ -1,0 +1,784 @@
+(venv) PS D:\klondike-ai> Get-ChildItem -Recurse -Include *.pyd, *.so, *.dll
+
+    Directory: D:\klondike-ai\python\lonelybot_py\lonelybot_py
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:35 PM        1712640 lonelybot_py.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\target\debug\deps
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:35 PM         306688 indoc-df15bac6e23e49d3.dll
+-a---           7/31/2025 12:41 PM        1003520 klondike_core.dll
+-a---           7/31/2025 12:41 PM        3333632 pyo3_macros-accb379dabe8eff5.dll
+-a---           7/31/2025 12:41 PM        2887680 serde_derive-553c8597dee17e16.dll
+
+    Directory: D:\klondike-ai\target\debug
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:41 PM        1003520 klondike_core.dll
+
+    Directory: D:\klondike-ai\target\release\deps
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:35 PM         294400 indoc-3a394cf9239779d3.dll
+-a---           7/31/2025 12:42 PM         366592 klondike_core.dll
+-a---           7/31/2025 12:42 PM        3212288 pyo3_macros-e7b2adceedc189e5.dll
+-a---           7/31/2025 12:42 PM        2789376 serde_derive-e34175ed9f3e710e.dll
+
+    Directory: D:\klondike-ai\target\release
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:42 PM         366592 klondike_core.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\contourpy
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         458752 _contourpy.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\cu2qu
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         100864 cu2qu.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\feaLib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         118784 lexer.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\misc
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         337408 bezierTools.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\pens
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          90624 momentsPen.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\qu2cu
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         107008 qu2cu.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\fontTools\varLib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         131584 iup.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\functorch
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:39 PM         184320 _C.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\google\_upb
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM         724707 _message.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\greenlet\tests
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          15872 _test_extension_cpp.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          14336 _test_extension.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\greenlet
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         219136 _greenlet.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\grpc\_cython
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM        9786880 cygrpc.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\hdbscan
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         326656 _hdbscan_boruvka.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         197120 _hdbscan_linkage.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         108544 _hdbscan_reachability.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         349696 _hdbscan_tree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         223744 _prediction_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         264192 dist_metrics.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\kiwisolver
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         148992 _cext.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\klondike_core
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:42 PM         366592 klondike_core.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\markupsafe
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          13312 _speedups.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\matplotlib\backends
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         471040 _backend_agg.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         152576 _tkagg.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\matplotlib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         138752 _c_internal_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         355840 _image.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         292352 _path.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         528896 _qhull.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         283136 _tri.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         924160 ft2font.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\numpy\_core
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          63488 _multiarray_tests.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        4531200 _multiarray_umath.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          12288 _operand_flag_tests.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          39936 _rational_tests.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        2410496 _simd.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          14336 _struct_ufunc_tests.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          34304 _umath_tests.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\numpy\fft
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         276480 _pocketfft_umath.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\numpy\linalg
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         111104 _umath_linalg.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          18432 lapack_lite.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\numpy\random
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         210432 _bounded_integers.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         165376 _common.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         719872 _generator.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          86016 _mt19937.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          96256 _pcg64.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          79872 _philox.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          60928 _sfc64.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         167936 bit_generator.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         606208 mtrand.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\numpy.libs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM       20403712 libscipy_openblas64_-860d95b1c38e637ce4509f5fa24fbf2a.dll
+-a---           7/31/2025 12:36 PM         575056 msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\pandas\_libs\tslibs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM          47104 base.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          61952 ccalendar.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         215552 conversion.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         145920 dtypes.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         257024 fields.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         186880 nattype.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         107008 np_datetime.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         780800 offsets.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         300032 parsing.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         379904 period.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         276992 strptime.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         440320 timedeltas.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         481792 timestamps.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         203776 timezones.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         229888 tzconversion.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         180736 vectorized.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\pandas\_libs\window
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM         322048 aggregations.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         154624 indexers.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\pandas\_libs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM        1703936 algos.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          93696 arrays.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          43520 byteswap.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM        2015744 groupby.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         156160 hashing.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM        1757184 hashtable.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         677376 index.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          52224 indexing.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         302592 internals.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM        1038848 interval.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM        1029632 join.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          51200 json.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         633344 lib.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         157184 missing.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          46592 ops_dispatch.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         192000 ops.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          32256 pandas_datetime.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          29696 pandas_parser.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         357888 parsers.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          64000 properties.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         229376 reshape.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         188928 sas.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         746496 sparse.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM          80896 testing.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         240640 tslib.cp312-win_amd64.pyd
+-a---           7/31/2025 12:38 PM         186368 writers.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\pandas.libs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:38 PM         575056 msvcp140-1a0962f2a91a74c6d7136a768987a591.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\PIL
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM        7833600 _avif.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM        2491392 _imaging.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         266240 _imagingcms.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM        2011136 _imagingft.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          25088 _imagingmath.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          13824 _imagingmorph.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          14848 _imagingtk.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         409600 _webp.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\_lib\_uarray
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         235008 _uarray.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\_lib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         109568 _ccallback_c.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          15872 _fpumode.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          52224 _test_ccallback.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          33792 _test_deprecation_call.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          25088 _test_deprecation_def.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          64000 messagestream.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\cluster
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         276480 _hierarchy.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         188928 _optimal_leaf_ordering.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         103936 _vq.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\fft\_pocketfft
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM        1099264 pypocketfft.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\fftpack
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         124416 convolve.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\integrate
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         435200 _dop.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         556032 _lsoda.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         534528 _odepack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         143360 _quadpack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          17920 _test_multivariate.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         558080 _test_odeint_banded.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         617472 _vode.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\interpolate
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         675328 _dfitpack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         985088 _dierckx.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         420864 _fitpack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         276480 _interpnd.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         305152 _ppoly.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1165312 _rbfinterp_pythran.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         150528 _rgi_cython.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\io\_fast_matrix_market
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM        2812928 _fmm_core.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\io\matlab
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          54784 _mio_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         191488 _mio5_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         109568 _streams.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\io
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         382464 _test_fortran.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\linalg
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         420352 _cythonized_array_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         776192 _decomp_interpolative.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         128000 _decomp_lu_cython.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         315392 _decomp_update.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         737792 _fblas.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        2273280 _flapack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1061888 _linalg_pythran.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         229376 _matfuncs_expm.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         210432 _matfuncs_schur_sqrtm.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         132608 _matfuncs_sqrtm_triu.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         148992 _solve_toeplitz.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         155648 cython_blas.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         523264 cython_lapack.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\ndimage
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          16896 _ctest.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          75264 _cytest.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         177664 _nd_image.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         276992 _ni_label.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         145408 _rank_filter_1d.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\odr
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         689152 __odrpack.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\optimize\_highspy
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM        5903360 _core.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1238016 _highs_options.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\optimize\_lsq
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          84480 givens_elimination.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\optimize\_trlib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         211456 _trlib.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\optimize\cython_optimize
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          80384 _zeros.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\optimize
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         197120 _bglu_dense.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          70144 _direct.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1033216 _group_columns.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         171520 _lbfgsb.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         177664 _lsap.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         123904 _minpack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         144896 _moduleTNC.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         301056 _pava_pybind.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         172032 _slsqplib.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          23040 _zeros.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\signal
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM        1006592 _max_len_seq_inner.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         157696 _peak_finding_utils.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         130560 _sigtools.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         158208 _sosfilt.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          63488 _spline.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         237056 _upfirdn_apply.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\sparse\csgraph
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         194560 _flow.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         202752 _matching.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         117760 _min_spanning_tree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         177152 _reordering.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         575488 _shortest_path.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         170496 _tools.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         451072 _traversal.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\sparse\linalg\_dsolve
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         542208 _superlu.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\sparse\linalg\_eigen\arpack
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         926720 _arpack.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\sparse\linalg\_propack
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         605184 _cpropack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         573952 _dpropack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         575488 _spropack.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         594944 _zpropack.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\sparse
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         531456 _csparsetools.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        4107776 _sparsetools.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\spatial\transform
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         364032 _rigid_transform.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         770048 _rotation.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\spatial
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM        1569792 _ckdtree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1404416 _distance_pybind.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         111104 _distance_wrap.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         100864 _hausdorff.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         892928 _qhull.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM          92672 _voronoi.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\special
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM          46592 _comb.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         138240 _ellip_harm_2.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1515520 _gufuncs.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         299520 _specfun.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        2284032 _special_ufuncs.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM         109568 _test_internal.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        2331136 _ufuncs_cxx.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        1482752 _ufuncs.cp312-win_amd64.pyd
+-a---           7/31/2025 12:36 PM        2982400 cython_special.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\stats\_levy_stable
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          53760 levyst.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\stats\_rcont
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         115200 rcont.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\stats\_unuran
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM        1289216 unuran_wrapper.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy\stats
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         124416 _ansari_swilk_statistics.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         355328 _biasedurn.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         296448 _qmc_cy.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         138240 _qmvnt_cy.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         232960 _sobol.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM        1086464 _stats_pythran.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         541696 _stats.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:36 PM         178688 _cyutility.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\scipy.libs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM       20155392 libscipy_openblas-6b2103f2ae4d8547998b5d188e9801fb.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\__check_build
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          28160 _check_build.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\_loss
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM        1876480 _loss.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\.libs
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         557728 msvcp140.dll
+-a---           7/31/2025 12:37 PM         193152 vcomp140.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\cluster\_hdbscan
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         102912 _linkage.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         176640 _reachability.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         196096 _tree.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\cluster
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          64512 _dbscan_inner.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         149504 _hierarchical_fast.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         272384 _k_means_common.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         280576 _k_means_elkan.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         183296 _k_means_lloyd.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         138240 _k_means_minibatch.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\datasets
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         316416 _svmlight_format_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\decomposition
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          94208 _cdnmf_fast.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         129024 _online_lda_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\ensemble\_hist_gradient_boosting
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          64000 _binning.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          65024 _bitset.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          69632 _gradient_boosting.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          88576 _predictor.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          29696 common.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         157184 histogram.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         167424 splitting.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\ensemble
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          97280 _gradient_boosting.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\feature_extraction
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          66560 _hashing_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\linear_model
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         263680 _cd_fast.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         124416 _sag_fast.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         166400 _sgd_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\manifold
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          88576 _barnes_hut_tsne.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          69632 _utils.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\metrics\_pairwise_distances_reduction
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         111104 _argkmin_classmode.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         156672 _argkmin.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         137216 _base.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         241152 _datasets_pair.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         246784 _middle_term_computer.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         120832 _radius_neighbors_classmode.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         176640 _radius_neighbors.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\metrics\cluster
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM          78336 _expected_mutual_info_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\metrics
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         433664 _dist_metrics.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         121856 _pairwise_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\neighbors
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         421376 _ball_tree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         421376 _kd_tree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          24576 _partition_nodes.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         140288 _quad_tree.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\preprocessing
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         255488 _csr_polynomial_expansion.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         300032 _target_encoder_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\svm
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         137728 _liblinear.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         225280 _libsvm_sparse.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         274432 _libsvm.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          39424 _newrand.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\tree
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         159744 _criterion.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         137216 _partitioner.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         117248 _splitter.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         331264 _tree.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         101888 _utils.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn\utils
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         253952 _cython_blas.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         118272 _fast_dict.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          16896 _heap.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          91136 _isfinite.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          47616 _openmp_helpers.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         166400 _random.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         148992 _seq_dataset.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          20992 _sorting.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         109056 _typedefs.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         106496 _vector_sentinel.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          73728 _weight_vector.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         135168 arrayfuncs.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          87040 murmurhash.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         515072 sparsefuncs_fast.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sklearn
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         121344 _cyutility.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM         131072 _isotonic.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\sqlalchemy\cyextension
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         168960 collections.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          70144 immutabledict.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          58880 processors.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          59904 resultproxy.cp312-win_amd64.pyd
+-a---           7/31/2025 12:37 PM          72704 util.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\torch\bin
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:39 PM         358912 asmjit.dll
+-a---           7/31/2025 12:39 PM        4961280 fbgemm.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\torch\lib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:39 PM         358912 asmjit.dll
+-a---           7/31/2025 12:39 PM        1010176 c10.dll
+-a---           7/31/2025 12:39 PM        4961280 fbgemm.dll
+-a---           7/31/2025 12:39 PM        1602416 libiomp5md.dll
+-a---           7/31/2025 12:39 PM          43888 libiompstubs5md.dll
+-a---           7/31/2025 12:39 PM          14848 shm.dll
+-a---           7/31/2025 12:39 PM      252177920 torch_cpu.dll
+-a---           7/31/2025 12:39 PM           9728 torch_global_deps.dll
+-a---           7/31/2025 12:39 PM       16940544 torch_python.dll
+-a---           7/31/2025 12:39 PM           9728 torch.dll
+-a---           7/31/2025 12:39 PM         195072 uv.dll
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\torch
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:39 PM          10240 _C.cp312-win_amd64.pyd
+
+    Directory: D:\klondike-ai\venv\Lib\site-packages\yaml
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           7/31/2025 12:37 PM         263680 _yaml.cp312-win_amd64.pyd
+
+(venv) PS D:\klondike-ai>

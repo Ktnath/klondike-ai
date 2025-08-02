@@ -1,0 +1,710 @@
+(venv) PS D:\klondike-ai> python solve_example.py
+
+🂠 Nouvelle partie générée
+État initial (JSON) : {"encoded":"1801439849295577088","foundations":[[],[],[],[]],"moves":["R 25","DP 2","DP 8","DP 9","DP 18","DP 20","DP 21","DP 41","DS 2"],"score":0,"stock":[],"tableau":[["8S"],["Ah","2D"],["5s","5d","4S"],["4c","Jh","7h","7D"],["8d","8c","9s","Ad","6D"],["7s","4h","2c","10d","3s","9C"],["Qd","As","Qh","10c","Kh","8h","QC"]],"waste":["9H","10S","10H","6C","KS","AC","7C","KC","JC","6S","6H","2H","QS","3H","JD","9D","2S","JS","4D","KD","3C","5C","5H","3D"]}
+Résolution en cours...
+
+✅ Résolution terminée. Coups à jouer :
+ → DS 2    🎯 Intention : Monter à la fondation
+ → R 25    🎯 Intention : Révéler une carte cachée
+ → DP 8    🎯 Intention : Ranger carte sur une autre
+ → DP 5    🎯 Intention : Ranger carte sur une autre
+ → DP 18    🎯 Intention : Ranger carte sur une autre
+ → DP 15    🎯 Intention : Ranger carte sur une autre
+ → DP 10    🎯 Intention : Ranger carte sur une autre
+ → R 7     🎯 Intention : Révéler une carte cachée
+ → PS 0    🎯 Intention : Monter à la fondation
+ → DS 6    🎯 Intention : Monter à la fondation
+ → DP 20    🎯 Intention : Ranger carte sur une autre
+ → DP 16    🎯 Intention : Ranger carte sur une autre
+ → R 13    🎯 Intention : Révéler une carte cachée
+ → DP 21    🎯 Intention : Ranger carte sur une autre
+ → R 17    🎯 Intention : Révéler une carte cachée
+ → DP 41    🎯 Intention : Ranger carte sur une autre
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 51    🎯 Intention : Déplacer un roi sur colonne vide
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → DP 49    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 44    🎯 Intention : Révéler une carte cachée
+ → R 30    🎯 Intention : Révéler une carte cachée
+ → DP 26    🎯 Intention : Ranger carte sur une autre
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DS 9    🎯 Intention : Monter à la fondation
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → DP 22    🎯 Intention : Ranger carte sur une autre
+ → R 19    🎯 Intention : Révéler une carte cachée
+ → R 48    🎯 Intention : Révéler une carte cachée
+ → R 36    🎯 Intention : Révéler une carte cachée
+ → DP 32    🎯 Intention : Ranger carte sur une autre
+ → R 29    🎯 Intention : Révéler une carte cachée
+ → DP 50    🎯 Intention : Déplacer un roi sur colonne vide
+ → R 46    🎯 Intention : Révéler une carte cachée
+ → PS 3    🎯 Intention : Monter à la fondation
+ → PS 5    🎯 Intention : Monter à la fondation
+ → PS 8    🎯 Intention : Monter à la fondation
+ → DP 9    🎯 Intention : Ranger carte sur une autre
+ → DP 42    🎯 Intention : Ranger carte sur une autre
+ → DP 38    🎯 Intention : Ranger carte sur une autre
+ → R 34    🎯 Intention : Révéler une carte cachée
+ → PS 11    🎯 Intention : Monter à la fondation
+ → DP 43    🎯 Intention : Ranger carte sur une autre
+ → R 39    🎯 Intention : Révéler une carte cachée
+ → PS 4    🎯 Intention : Monter à la fondation
+ → R 14    🎯 Intention : Révéler une carte cachée
+ → SP 11    🎯 Intention : Ranger carte sur une autre
+ → PS 10    🎯 Intention : Monter à la fondation
+ → PS 14    🎯 Intention : Monter à la fondation
+ → PS 16    🎯 Intention : Monter à la fondation
+ → R 23    🎯 Intention : Révéler une carte cachée
+ → PS 1    🎯 Intention : Monter à la fondation
+ → PS 7    🎯 Intention : Monter à la fondation
+ → PS 9    🎯 Intention : Monter à la fondation
+ → PS 11    🎯 Intention : Monter à la fondation
+ → PS 13    🎯 Intention : Monter à la fondation
+ → PS 15    🎯 Intention : Monter à la fondation
+ → PS 17    🎯 Intention : Monter à la fondation
+ → PS 19    🎯 Intention : Monter à la fondation
+ → PS 21    🎯 Intention : Monter à la fondation
+ → PS 22    🎯 Intention : Monter à la fondation
+ → R 35    🎯 Intention : Révéler une carte cachée
+ → R 24    🎯 Intention : Révéler une carte cachée
+ → SP 22    🎯 Intention : Ranger carte sur une autre
+ → PS 23    🎯 Intention : Monter à la fondation
+ → PS 25    🎯 Intention : Monter à la fondation
+ → PS 27    🎯 Intention : Monter à la fondation
+ → PS 29    🎯 Intention : Monter à la fondation
+ → PS 35    🎯 Intention : Monter à la fondation
+ → R 28    🎯 Intention : Révéler une carte cachée
+ → PS 31    🎯 Intention : Monter à la fondation
+ → DP 37    🎯 Intention : Ranger carte sur une autre
+ → DP 33    🎯 Intention : Ranger carte sur une autre
+ → SP 35    🎯 Intention : Ranger carte sur une autre
+ → SP 31    🎯 Intention : Ranger carte sur une autre
+ → DP 45    🎯 Intention : Ranger carte sur une autre
+ → R 40    🎯 Intention : Révéler une carte cachée
+ → PS 12    🎯 Intention : Monter à la fondation
+ → PS 18    🎯 Intention : Monter à la fondation
+ → PS 20    🎯 Intention : Monter à la fondation
+ → PS 22    🎯 Intention : Monter à la fondation
+ → PS 24    🎯 Intention : Monter à la fondation
+ → PS 26    🎯 Intention : Monter à la fondation
+ → PS 28    🎯 Intention : Monter à la fondation
+ → PS 30    🎯 Intention : Monter à la fondation
+ → PS 32    🎯 Intention : Monter à la fondation
+ → PS 34    🎯 Intention : Monter à la fondation
+ → PS 36    🎯 Intention : Monter à la fondation
+ → PS 38    🎯 Intention : Monter à la fondation
+ → PS 40    🎯 Intention : Monter à la fondation
+ → DS 33    🎯 Intention : Monter à la fondation
+ → PS 39    🎯 Intention : Monter à la fondation
+ → PS 41    🎯 Intention : Monter à la fondation
+ → PS 42    🎯 Intention : Monter à la fondation
+ → PS 44    🎯 Intention : Monter à la fondation
+ → DS 37    🎯 Intention : Monter à la fondation
+ → PS 43    🎯 Intention : Monter à la fondation
+ → PS 45    🎯 Intention : Monter à la fondation
+ → PS 46    🎯 Intention : Monter à la fondation
+ → PS 47    🎯 Intention : Monter à la fondation
+ → PS 48    🎯 Intention : Monter à la fondation
+ → PS 49    🎯 Intention : Monter à la fondation
+ → PS 50    🎯 Intention : Monter à la fondation
+ → DS 51    🎯 Intention : Monter à la fondation
+(venv) PS D:\klondike-ai>
