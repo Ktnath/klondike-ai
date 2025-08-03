@@ -10,7 +10,7 @@ name = "klondike_ai"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-klondike_core = { path = "../core" }
+klondike_core = { path = "../klondike_core" }
 pyo3.workspace = true
 numpy.workspace = true
 torch.workspace = true

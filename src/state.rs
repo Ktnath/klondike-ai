@@ -2,7 +2,7 @@ use core::num::NonZeroU8;
 
 use arrayvec::ArrayVec;
 use rand::seq::SliceRandom;
-use rand::{Rng, RngCore};
+use rand::{rngs::SmallRng, Rng, RngCore, SeedableRng};
 
 use crate::card::{
     Card, ALT_MASK, HALF_MASK, KING_MASK, KING_RANK, N_CARDS, N_SUITS, RANK_MASK, SUIT_MASK,
@@ -494,6 +494,19 @@ impl Solitaire {
         self.deck.decode(deck_encode);
 
         self.visible_mask = self.compute_visible_mask();
+    }
+
+    /// Construct a game state from its encoded representation.
+    ///
+    /// This helper uses the same deterministic deck generation as the
+    /// internal `decode` method and is exposed for external crates that need
+    /// to reconstruct a `Solitaire` from an `Encode` value.
+    #[must_use]
+    pub fn from_encode(encode: Encode) -> Self {
+        let mut rng = SmallRng::seed_from_u64(0);
+        let mut st = Self::deal_with_rng(&mut rng);
+        st.decode(encode);
+        st
     }
 
     #[must_use]

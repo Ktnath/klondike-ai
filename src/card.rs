@@ -95,8 +95,9 @@ impl Card {
         self.0
     }
 
+    /// Construct a card from its 0-51 mask index.
     #[must_use]
-    pub(crate) const fn from_mask_index(idx: u8) -> Self {
+    pub const fn from_mask_index(idx: u8) -> Self {
         Self(idx)
     }
 
