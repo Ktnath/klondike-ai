@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from intention_utils import group_into_hierarchy
-from utils.config import load_config, get_input_dim
+from utils.config import load_config, get_input_dim, get_config_value
 from train.train_dqn import DQN
 
 import numpy as np
@@ -22,6 +22,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+import time
+
+try:  # Optional dependency
+    from torch.utils.tensorboard import SummaryWriter
+except Exception:  # pragma: no cover
+    SummaryWriter = None
 from utils.training import log_epoch_metrics
 from env.klondike_env import KlondikeEnv
 from core.validate_dataset import validate_npz_dataset
@@ -31,6 +37,18 @@ DEFAULT_DATASET = os.path.join("data", "expert_dataset.npz")
 
 # Automatically patched for modular project structure via bootstrap.py
 from bootstrap import *
+
+
+def _init_writer(config):
+    """Initialize a TensorBoard writer if enabled in config."""
+    if SummaryWriter is None:
+        return None
+    use_tb = bool(get_config_value(config, "logging.tensorboard", False))
+    if not use_tb:
+        return None
+    log_dir = os.path.join("runs", f"exp_{int(time.time())}")
+    print(f"📝 TensorBoard actif → logs dans {log_dir}")
+    return SummaryWriter(log_dir=log_dir)
 
 
 def _intention_to_index(value: str | int | None) -> int:
@@ -119,6 +137,7 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
     """Train the imitation model and save it."""
     cfg = load_config()
     expected_dim = get_input_dim(cfg)
+    writer = _init_writer(cfg)
 
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
     if dataset.tensors[0].shape[1] != expected_dim:
@@ -154,12 +173,18 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
             idx = counts.argmax().item()
             dominant = uniq[idx].item()
             logging.info("Epoch %d Dominant intention: %s (%d samples)", epoch, dominant, counts[idx].item())
+        if writer:
+            writer.add_scalar("Loss", avg_loss, epoch)
+            acc = correct / total if total else 0
+            writer.add_scalar("Accuracy", acc, epoch)
 
     dirpath = os.path.dirname(model_path)
     if dirpath:
         os.makedirs(dirpath, exist_ok=True)
     torch.save(model.state_dict(), model_path)
     logging.info("Model saved to %s", model_path)
+    if writer:
+        writer.close()
 
 
 def fine_tune_model(
@@ -171,6 +196,7 @@ def fine_tune_model(
     """Fine tune a pre-trained model on a dataset with a scheduler."""
     cfg = load_config()
     expected_dim = get_input_dim(cfg)
+    writer = _init_writer(cfg)
 
     loader = DataLoader(dataset, batch_size=64, shuffle=True)
     if dataset.tensors[0].shape[1] != expected_dim:
@@ -201,6 +227,10 @@ def fine_tune_model(
         scheduler.step()
         avg_loss = epoch_loss / len(loader)
         log_epoch_metrics(epoch, avg_loss, correct, total)
+        if writer:
+            writer.add_scalar("Loss", avg_loss, epoch)
+            acc = correct / total if total else 0
+            writer.add_scalar("Accuracy", acc, epoch)
         if intentions is not None:
             uniq, counts = torch.unique(intentions, return_counts=True)
             idx = counts.argmax().item()
@@ -211,6 +241,8 @@ def fine_tune_model(
                 dominant,
                 counts[idx].item(),
             )
+    if writer:
+        writer.close()
 
 
 def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
