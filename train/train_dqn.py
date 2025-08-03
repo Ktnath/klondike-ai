@@ -25,6 +25,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import time
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+try:
+    import seaborn as sns
+except Exception:  # pragma: no cover
+    sns = None
 
 try:  # Optional dependency
     from torch.utils.tensorboard import SummaryWriter
@@ -542,6 +548,14 @@ def train(config, *, force_dim_check: bool = False) -> None:
         episode_reward = 0.0
         steps_in_episode = 0
         valid_move_sum = 0
+        episode_actions: List[int] = []
+        expert_actions_taken: List[int] = []
+        if writer and episode % 200 == 0:
+            writer.add_embedding(
+                torch.tensor(state, dtype=torch.float32).unsqueeze(0),
+                metadata=[f"episode_{episode}"],
+                global_step=episode,
+            )
         if ep_logging:
             next_ep += 1
             ep_path = os.path.join(episode_dir, f"episode_{next_ep}.csv")
@@ -607,6 +621,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
                 )
                 break
 
+            episode_actions.append(action)
             logger.debug(
                 "Episode %d step %d: calling env.step(%s)",
                 episode,
@@ -643,6 +658,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
             episode_reward += reward
             if use_dagger and expert_step < len(expert_moves):
                 expert_action = expert_moves[expert_step]
+                expert_actions_taken.append(expert_action)
                 if action != expert_action:
                     dagger_ds.add(current_state.tolist(), expert_action)
                 expert_step += 1
@@ -777,6 +793,27 @@ def train(config, *, force_dim_check: bool = False) -> None:
             loss_val = loss.item() if isinstance(loss, torch.Tensor) else float(loss)
             writer.add_scalar("Loss", loss_val, episode)
             writer.add_scalar("WinRate", win_rate, episode)
+            action_counts = Counter(episode_actions)
+            top5 = {f"move_{a}": c for a, c in action_counts.most_common(5)}
+            if top5:
+                writer.add_scalars("Actions/Frequency", top5, episode)
+            if episode % 100 == 0:
+                for name, param in policy_net.named_parameters():
+                    writer.add_histogram(name, param, episode)
+            if (
+                use_dagger
+                and expert_actions_taken
+                and sns is not None
+                and episode % 50 == 0
+            ):
+                cm = confusion_matrix(
+                    expert_actions_taken[: len(episode_actions)],
+                    episode_actions[: len(expert_actions_taken)],
+                )
+                fig = plt.figure()
+                sns.heatmap(cm, annot=True)
+                writer.add_figure("Confusion Matrix", fig, episode)
+                plt.close(fig)
 
         if episode % log_interval == 0:
             # win_rate already computed above
@@ -824,6 +861,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
     log_file.close()
     if writer:
         writer.close()
+    print("📊 Logs TensorBoard enrichis avec histogrammes et heatmaps")
 
 
 if __name__ == "__main__":
