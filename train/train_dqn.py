@@ -24,6 +24,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import time
+
+try:  # Optional dependency
+    from torch.utils.tensorboard import SummaryWriter
+except Exception:  # pragma: no cover
+    SummaryWriter = None
 
 
 try:
@@ -49,6 +55,18 @@ from dagger_dataset import DaggerDataset
 from train.plot_results import plot_metrics
 from train.intention_embedding import IntentionEncoder
 from core.validate_dataset import validate_npz_dataset
+
+
+def _init_writer(config):
+    """Initialize a TensorBoard SummaryWriter if enabled."""
+    if SummaryWriter is None:
+        return None
+    use_tb = bool(get_config_value(config, "logging.tensorboard", False))
+    if not use_tb:
+        return None
+    log_dir = os.path.join("runs", f"exp_{int(time.time())}")
+    print(f"📝 TensorBoard actif → logs dans {log_dir}")
+    return SummaryWriter(log_dir=log_dir)
 
 
 class DQN(nn.Module):
@@ -484,6 +502,7 @@ def train(config, *, force_dim_check: bool = False) -> None:
         "win_rate",
         "avg_valid_moves",
     ])
+    writer = _init_writer(config)
 
     ep_logging = get_config_value(config, "logging.enable_logging", False)
     episode_dir = os.path.join("logs", "episodes")
@@ -752,9 +771,15 @@ def train(config, *, force_dim_check: bool = False) -> None:
         logging.debug("Epsilon decayed to %.3f", epsilon)
         if is_won_state(env.state):
             wins += 1
+        win_rate = 100.0 * wins / episode
+        if writer:
+            writer.add_scalar("Reward/mean", episode_reward, episode)
+            loss_val = loss.item() if isinstance(loss, torch.Tensor) else float(loss)
+            writer.add_scalar("Loss", loss_val, episode)
+            writer.add_scalar("WinRate", win_rate, episode)
 
         if episode % log_interval == 0:
-            win_rate = 100.0 * wins / episode
+            # win_rate already computed above
             loss_val = loss.item() if isinstance(loss, torch.Tensor) else loss
             avg_valid = valid_move_sum / steps_in_episode if steps_in_episode else 0
             logging.info(
@@ -797,6 +822,8 @@ def train(config, *, force_dim_check: bool = False) -> None:
     torch.save(policy_net.state_dict(), DEFAULT_MODEL_PATH)
     logging.info(f"Mod\u00e8le final sauvegard\u00e9 sous {DEFAULT_MODEL_PATH}")
     log_file.close()
+    if writer:
+        writer.close()
 
 
 if __name__ == "__main__":
