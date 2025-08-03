@@ -23,6 +23,13 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import time
+from collections import Counter
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+try:
+    import seaborn as sns
+except Exception:  # pragma: no cover
+    sns = None
 
 try:  # Optional dependency
     from torch.utils.tensorboard import SummaryWriter
@@ -154,6 +161,8 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
         epoch_loss = 0.0
         correct = 0
         total = 0
+        epoch_preds: List[int] = []
+        epoch_labels: List[int] = []
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
             logits = model(X_batch)
@@ -164,6 +173,8 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
             preds = logits.argmax(1)
             correct += (preds == y_batch).sum().item()
             total += y_batch.size(0)
+            epoch_preds.extend(preds.tolist())
+            epoch_labels.extend(y_batch.tolist())
 
             epoch_loss += loss.item()
         avg_loss = epoch_loss / len(loader)
@@ -177,6 +188,25 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
             writer.add_scalar("Loss", avg_loss, epoch)
             acc = correct / total if total else 0
             writer.add_scalar("Accuracy", acc, epoch)
+            action_counts = Counter(epoch_preds)
+            top5 = {f"move_{a}": c for a, c in action_counts.most_common(5)}
+            if top5 and epoch % 5 == 0:
+                writer.add_scalars("Actions/Frequency", top5, epoch)
+            if epoch % 50 == 0:
+                for name, param in model.named_parameters():
+                    writer.add_histogram(name, param, epoch)
+            if sns is not None and epoch % 10 == 0:
+                cm = confusion_matrix(epoch_labels, epoch_preds)
+                fig = plt.figure()
+                sns.heatmap(cm, annot=True)
+                writer.add_figure("Confusion Matrix", fig, epoch)
+                plt.close(fig)
+            if epoch % 100 == 0:
+                writer.add_embedding(
+                    dataset.tensors[0][0].unsqueeze(0),
+                    metadata=[f"epoch_{epoch}"],
+                    global_step=epoch,
+                )
 
     dirpath = os.path.dirname(model_path)
     if dirpath:
@@ -185,6 +215,7 @@ def train(dataset: TensorDataset, epochs: int, model_path: str, intentions: Opti
     logging.info("Model saved to %s", model_path)
     if writer:
         writer.close()
+    print("📊 Logs TensorBoard enrichis avec histogrammes et heatmaps")
 
 
 def fine_tune_model(
@@ -213,6 +244,8 @@ def fine_tune_model(
         epoch_loss = 0.0
         correct = 0
         total = 0
+        epoch_preds: List[int] = []
+        epoch_labels: List[int] = []
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
             logits = model(X_batch)
@@ -224,6 +257,8 @@ def fine_tune_model(
             correct += (preds == y_batch).sum().item()
             total += y_batch.size(0)
             epoch_loss += loss.item()
+            epoch_preds.extend(preds.tolist())
+            epoch_labels.extend(y_batch.tolist())
         scheduler.step()
         avg_loss = epoch_loss / len(loader)
         log_epoch_metrics(epoch, avg_loss, correct, total)
@@ -231,6 +266,25 @@ def fine_tune_model(
             writer.add_scalar("Loss", avg_loss, epoch)
             acc = correct / total if total else 0
             writer.add_scalar("Accuracy", acc, epoch)
+            action_counts = Counter(epoch_preds)
+            top5 = {f"move_{a}": c for a, c in action_counts.most_common(5)}
+            if top5 and epoch % 5 == 0:
+                writer.add_scalars("Actions/Frequency", top5, epoch)
+            if epoch % 50 == 0:
+                for name, param in model.named_parameters():
+                    writer.add_histogram(name, param, epoch)
+            if sns is not None and epoch % 10 == 0:
+                cm = confusion_matrix(epoch_labels, epoch_preds)
+                fig = plt.figure()
+                sns.heatmap(cm, annot=True)
+                writer.add_figure("Confusion Matrix", fig, epoch)
+                plt.close(fig)
+            if epoch % 100 == 0:
+                writer.add_embedding(
+                    dataset.tensors[0][0].unsqueeze(0),
+                    metadata=[f"epoch_{epoch}"],
+                    global_step=epoch,
+                )
         if intentions is not None:
             uniq, counts = torch.unique(intentions, return_counts=True)
             idx = counts.argmax().item()
@@ -243,6 +297,7 @@ def fine_tune_model(
             )
     if writer:
         writer.close()
+    print("📊 Logs TensorBoard enrichis avec histogrammes et heatmaps")
 
 
 def reinforce_train(model: DQN, episodes: int, gamma: float = 0.99) -> None:
