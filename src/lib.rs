@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_std)]
+// Use the standard library for simplicity and broader compatibility.
 pub mod card;
 pub mod convert;
 pub mod deck;

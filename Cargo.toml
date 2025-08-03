@@ -1,5 +1,29 @@
+[package]
+name = "lonelybot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rand.workspace = true
+rand_mt.workspace = true
+arrayvec.workspace = true
+hashbrown.workspace = true
+static_assertions.workspace = true
+uint.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[[bin]]
+name = "solve_seeded"
+path = "bin/solve_seeded.rs"
+
 [workspace]
-members = ["core", "ai", "lonecli"]
+members = ["ai", "lonecli", "klondike_core"]
 resolver = "2"
 
 [workspace.package]
@@ -24,4 +48,3 @@ signal-hook = "0.3.17"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 maturin = "1.9"
-
