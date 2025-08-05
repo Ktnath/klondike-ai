@@ -84,7 +84,6 @@ def test_infer_intention():
     state = kc.new_game()
     encoded = json.loads(state)["encoded"]
     move = kc.legal_moves(encoded)[0]
-    next_state, _ = kc.play_move(state, move)
     assert callable(kc.infer_intention)
-    intention = kc.infer_intention(state, move, next_state)
+    intention = kc.infer_intention(state, move)
     assert isinstance(intention, str)

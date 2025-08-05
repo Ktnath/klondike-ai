@@ -125,7 +125,7 @@ class KlondikeEnv(gym.Env):
             intention = ""
         else:
             self.state, valid = play_move(self.state, move)
-            intention = infer_intention(prev, move, self.state) if self.use_intentions else ""
+            intention = infer_intention(prev, move) if self.use_intentions else ""
 
         encoded = self._encoded(self.state)
         terminated = bool(is_won(encoded)) or bool(is_lost(encoded))
