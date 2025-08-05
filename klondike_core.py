@@ -203,12 +203,12 @@ def is_lost(state_json: str) -> bool:
     return bool(_core.is_lost(state_json))
 
 
-def infer_intention(before: str, move: str, after: str) -> str:
-    """Infer the intention of ``move`` using ``before`` and ``after`` states."""
+def infer_intention(state_json: str, move: str) -> str:
+    """Infer the intention of ``move`` in ``state_json``."""
 
     if _core is None:
         _missing()
-    return _core.infer_intention(before, move, after)
+    return _core.infer_intention(state_json, move)
 
 
 __all__ = [

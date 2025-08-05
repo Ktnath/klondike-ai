@@ -136,10 +136,9 @@ def test_infer_intention():
         state = kc.new_game()
         encoded = json.loads(state)["encoded"]
         move = kc.legal_moves(encoded)[0]
-        next_state, _ = kc.play_move(state, move)
-        intention = kc.infer_intention(state, move, next_state)
+        intention = kc.infer_intention(state, move)
         assert isinstance(intention, str)
     else:
         with pytest.raises(NotImplementedError):
-            kc.infer_intention("{}", "DS 0", "{}")
+            kc.infer_intention("{}", "DS 0")
 

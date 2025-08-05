@@ -2,15 +2,18 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
 use serde_json::Value;
 
-use lonelybot::card::Card;
+use lonelybot::analysis::{ranked_moves, HeuristicConfig, PlayStyle};
+use lonelybot::card::{Card, KING_RANK};
 use lonelybot::engine::SolitaireEngine;
 use lonelybot::moves::Move as EngineMove;
+use lonelybot::partial::PartialState;
 use lonelybot::pruning::FullPruner;
 use lonelybot::shuffler::default_shuffle;
 use lonelybot::solver::{solve_with_tracking, SearchResult};
 use lonelybot::standard::StandardSolitaire;
 use lonelybot::state::Solitaire;
 use lonelybot::tracking::{DefaultTerminateSignal, EmptySearchStats};
+use lonelybot::deck::N_PILES;
 use core::num::NonZeroU8;
 
 fn encode_state(game: &Solitaire) -> String {
@@ -52,6 +55,22 @@ fn card_to_string(card: Card, lower: bool) -> String {
     let s = match suit { 0 => 'H', 1 => 'D', 2 => 'C', 3 => 'S', _ => 'x' };
     let suit_char = if lower { s.to_ascii_lowercase() } else { s };
     format!("{}{}", NUMBERS[rank as usize], suit_char)
+}
+
+fn foundation_count(game: &Solitaire) -> usize {
+    game.get_stack().len() as usize
+}
+
+fn count_empty_columns(game: &Solitaire) -> usize {
+    let piles = game.compute_visible_piles();
+    let hidden = game.get_hidden();
+    let mut count = 0usize;
+    for i in 0..N_PILES {
+        if piles[i as usize].is_empty() && hidden.len(i) == 0 {
+            count += 1;
+        }
+    }
+    count
 }
 
 #[pyfunction]
@@ -221,6 +240,60 @@ pub fn is_lost(state: &str) -> PyResult<bool> {
 }
 
 #[pyfunction]
+pub fn infer_intention(state_json: &str, mv: &str) -> PyResult<String> {
+    let v: Value = serde_json::from_str(state_json)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let encoded = v
+        .get("encoded")
+        .and_then(|e| e.as_str())
+        .ok_or_else(|| PyValueError::new_err("missing encoded"))?;
+    let state = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
+
+    let parsed = parse_move(mv).ok_or_else(|| PyValueError::new_err("invalid move"))?;
+
+    // build engine and partial state for ranked moves
+    let engine: SolitaireEngine<FullPruner> = state.clone().into();
+    let game: StandardSolitaire = (&state).into();
+    let partial: PartialState = (&game).into();
+    let ranked = ranked_moves(
+        &engine,
+        &partial,
+        PlayStyle::Neutral,
+        &HeuristicConfig::default(),
+    );
+
+    let found = ranked.iter().any(|m| move_to_string(m.mv) == mv);
+    if !found {
+        return Ok("Unknown".to_string());
+    }
+
+    let before_found = foundation_count(&state);
+    let before_empty = count_empty_columns(&state);
+    let mut after_engine: SolitaireEngine<FullPruner> = state.clone().into();
+    let _ = after_engine.do_move(parsed);
+    let after = after_engine.into_state();
+    let after_found = foundation_count(&after);
+    if after_found > before_found {
+        return Ok("ToFoundation".to_string());
+    }
+
+    let intention = match parsed {
+        EngineMove::Reveal(_) => "Reveal",
+        EngineMove::DeckPile(c) | EngineMove::StackPile(c) => {
+            let after_empty = count_empty_columns(&after);
+            if c.rank() == KING_RANK && after_empty < before_empty {
+                "EmptyColumn"
+            } else {
+                "ToTableau"
+            }
+        }
+        EngineMove::DeckStack(_) | EngineMove::PileStack(_) => "ToFoundation",
+    };
+
+    Ok(intention.to_string())
+}
+
+#[pyfunction]
 pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
     let v: Value = serde_json::from_str(state).map_err(|_| PyValueError::new_err("Invalid JSON passed to reward engine"))?;
     if !v.get("foundations").is_some() {
@@ -255,6 +328,7 @@ fn klondike_core(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(solve_klondike, m)?)?;
     m.add_function(wrap_pyfunction!(is_won, m)?)?;
     m.add_function(wrap_pyfunction!(is_lost, m)?)?;
+    m.add_function(wrap_pyfunction!(infer_intention, m)?)?;
     m.add_function(wrap_pyfunction!(compute_base_reward_json, m)?)?;
     m.add_function(wrap_pyfunction!(encode_observation, m)?)?;
     Ok(())
