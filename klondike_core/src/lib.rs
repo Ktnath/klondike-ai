@@ -379,10 +379,90 @@ pub fn compute_base_reward_json(state: &str) -> PyResult<f32> {
 
 #[pyfunction]
 pub fn encode_observation(state: &str) -> PyResult<Vec<f32>> {
-    // The implementation is simplified: reuse base reward computation to build observation.
-    // For now return empty vector.
-    let _ = state; // suppress unused
-    Ok(Vec::new())
+    // Parse JSON input to extract encoded state string
+    let v: Value =
+        serde_json::from_str(state).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let encoded = v
+        .get("encoded")
+        .and_then(|e| e.as_str())
+        .ok_or_else(|| PyValueError::new_err("missing encoded"))?;
+
+    // Decode into solitaire state
+    let game = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
+
+    // Precompute visible piles and hidden information
+    let piles = game.compute_visible_piles();
+    let hidden = game.get_hidden();
+    let deck = game.get_deck();
+
+    let mut obs: Vec<f32> = Vec::with_capacity(156);
+
+    // --- Column summaries (28 floats) ---
+    for i in 0..N_PILES {
+        let total = hidden.len(i) as u8;
+        let visible = piles[i as usize].len() as u8;
+        let hidden_count = total.saturating_sub(visible);
+        obs.push(total as f32); // total cards in column
+        obs.push(hidden_count as f32); // hidden cards
+        if let Some(card) = piles[i as usize].first() {
+            let (rank, suit) = card.split();
+            obs.push((rank + 1) as f32); // rank 1-13
+            obs.push(suit as f32); // suit 0-3
+        } else {
+            obs.push(0.0);
+            obs.push(0.0);
+        }
+    }
+
+    // --- Foundations (4 floats) ---
+    let stack = game.get_stack();
+    for s in 0..lonelybot::card::N_SUITS {
+        obs.push(stack.get(s) as f32);
+    }
+
+    // --- Waste (17 floats: suit one-hot + rank one-hot) ---
+    let mut waste_vec = vec![0.0f32; 17];
+    if let Some(card) = deck.waste_iter().last() {
+        let (rank, suit) = card.split();
+        waste_vec[suit as usize] = 1.0; // suit one-hot
+        waste_vec[4 + rank as usize] = 1.0; // rank one-hot
+    }
+    obs.extend(waste_vec);
+
+    // --- Deck remaining (1 float) ---
+    let deck_remaining = deck.deck_iter().count() as f32;
+    obs.push(deck_remaining);
+
+    // --- Number of moves played (1 float) ---
+    // The state does not currently expose this information; default to 0.
+    obs.push(0.0);
+
+    // --- Top visible cards of each column (3 cards * 5 features) ---
+    for i in 0..N_PILES {
+        let pile = &piles[i as usize];
+        for j in 0..3 {
+            if let Some(card) = pile.get(j) {
+                let (rank, suit) = card.split();
+                let mut suit_onehot = [0.0f32; 4];
+                suit_onehot[suit as usize] = 1.0;
+                obs.extend_from_slice(&suit_onehot); // suit one-hot
+                obs.push((rank + 1) as f32); // rank scalar
+            } else {
+                // padding
+                obs.extend_from_slice(&[0.0; 4]);
+                obs.push(0.0);
+            }
+        }
+    }
+
+    // Ensure the observation vector has exactly 156 elements
+    if obs.len() < 156 {
+        obs.resize(156, 0.0);
+    } else if obs.len() > 156 {
+        obs.truncate(156);
+    }
+
+    Ok(obs)
 }
 
 #[pymodule]
