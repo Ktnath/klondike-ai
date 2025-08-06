@@ -1,6 +1,12 @@
 import json
 from collections import Counter
-from klondike_core import solve_klondike, encode_observation, move_index, new_game
+from klondike_core import (
+    solve_klondike,
+    encode_observation,
+    move_index,
+    new_game,
+    play_move,
+)
 
 N = 10  # Nombre de parties à tester
 
@@ -21,7 +27,7 @@ def audit_solve_klondike():
                 errors += 1
                 continue
 
-            for state, move, intention in result:
+            for move, intention in result:
                 obs = encode_observation(state)
                 if not isinstance(obs, list) or len(obs) < 100:
                     print(f"⚠️ Observation invalide en partie {i+1}")
@@ -34,8 +40,10 @@ def audit_solve_klondike():
                     errors += 1
                 all_actions.append(idx)
                 all_intentions.append(intention)
-
                 total_moves += 1
+
+                # Advance to next state using the move
+                state, _ = play_move(state, move)
 
         except Exception as e:
             print(f"❌ Erreur partie {i+1}: {e}")

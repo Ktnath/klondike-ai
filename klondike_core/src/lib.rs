@@ -214,15 +214,84 @@ pub fn shuffle_seed() -> PyResult<u64> {
 
 #[pyfunction]
 pub fn solve_klondike(state_json: &str) -> PyResult<Vec<(String, String)>> {
-    let v: Value = serde_json::from_str(state_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
-    let encoded = v.get("encoded").and_then(|e| e.as_str()).ok_or_else(|| PyValueError::new_err("missing encoded"))?;
-    let mut state = decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
-    let (status, history) = solve_with_tracking(&mut state, &EmptySearchStats {}, &DefaultTerminateSignal {});
+    // Parse JSON and decode initial game state
+    let v: Value =
+        serde_json::from_str(state_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let encoded = v
+        .get("encoded")
+        .and_then(|e| e.as_str())
+        .ok_or_else(|| PyValueError::new_err("missing encoded"))?;
+
+    // Keep a copy of the starting state for replay purposes
+    let mut solving_state =
+        decode_state(encoded).ok_or_else(|| PyValueError::new_err("invalid state"))?;
+    let mut replay_state = solving_state.clone();
+
+    // Run the solver and capture the sequence of moves that leads to a win
+    let (status, history) =
+        solve_with_tracking(&mut solving_state, &EmptySearchStats {}, &DefaultTerminateSignal {});
     if status != SearchResult::Solved {
         return Ok(Vec::new());
     }
     let hist = history.ok_or_else(|| PyValueError::new_err("no history"))?;
-    Ok(hist.iter().map(|m| (move_to_string(*m), String::new())).collect())
+
+    // Reconstruct intentions for each move by analysing the state before the move
+    let mut annotated: Vec<(String, String)> = Vec::with_capacity(hist.len());
+    for mv in hist.iter() {
+        // Build analysis helpers for the current state
+        let engine: SolitaireEngine<FullPruner> = replay_state.clone().into();
+        let game: StandardSolitaire = (&replay_state).into();
+        let partial: PartialState = (&game).into();
+        let ranked = ranked_moves(
+            &engine,
+            &partial,
+            PlayStyle::Neutral,
+            &HeuristicConfig::default(),
+        );
+
+        // Identify the ranked move corresponding to the solver move
+        let found = ranked.iter().any(|rm| rm.mv == *mv);
+        let mut intention = "Unknown".to_string();
+
+        if found {
+            // Analyse the effect of the move to derive the intention
+            let before_found = foundation_count(&replay_state);
+            let before_empty = count_empty_columns(&replay_state);
+            let mut after_engine: SolitaireEngine<FullPruner> = replay_state.clone().into();
+            let _ = after_engine.do_move(*mv);
+            let after_state = after_engine.into_state();
+            let after_found = foundation_count(&after_state);
+
+            if after_found > before_found {
+                intention = "ToFoundation".to_string();
+            } else {
+                intention = match *mv {
+                    EngineMove::Reveal(_) => "ExposeCard".to_string(),
+                    EngineMove::DeckPile(c) | EngineMove::StackPile(c) => {
+                        let after_empty = count_empty_columns(&after_state);
+                        if c.rank() == KING_RANK && after_empty < before_empty {
+                            "EmptyColumn".to_string()
+                        } else {
+                            "ToTableau".to_string()
+                        }
+                    }
+                    EngineMove::DeckStack(_) | EngineMove::PileStack(_) => {
+                        // Should have been caught by foundation count, but keep for safety
+                        "ToFoundation".to_string()
+                    }
+                };
+            }
+        }
+
+        annotated.push((move_to_string(*mv), intention));
+
+        // Advance the replay state by applying the move
+        let mut next_engine: SolitaireEngine<FullPruner> = replay_state.into();
+        let _ = next_engine.do_move(*mv);
+        replay_state = next_engine.into_state();
+    }
+
+    Ok(annotated)
 }
 
 #[pyfunction]
